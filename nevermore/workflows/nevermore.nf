@@ -2,15 +2,18 @@
 
 nextflow.enable.dsl=2
 
-include { qc_bbduk } from "../../modules/nevermore/qc/bbduk"
-include { qc_bbduk_stepwise_amplicon } from "../../modules/nevermore/qc/bbduk_amplicon"
-include { qc_bbmerge } from "../../modules/nevermore/qc/bbmerge"
-include { fastqc } from "../../modules/nevermore/qc/fastqc"
-include { multiqc } from "../../modules/nevermore/qc/multiqc"
-include { classify_sample } from "../../modules/nevermore/functions"
+include { qc_bbduk } from "../modules/qc/bbduk"
+include { qc_bbduk_stepwise_amplicon } from "../modules/qc/bbduk_amplicon"
+include { qc_bbmerge } from "../modules/qc/bbmerge"
+include { fastqc } from "../modules/qc/fastqc"
+include { multiqc } from "../modules/qc/multiqc"
+include { classify_sample } from "../modules/functions"
 
 def merge_pairs = (params.merge_pairs || false)
 def keep_orphans = (params.keep_orphans || false)
+
+def asset_dir = (projectDir.endsWith("nevermore")) ? "${projectDir}/assets" : "${projectDir}/nevermore/assets"
+def config_dir = (projectDir.endsWith("nevermore")) ? "${projectDir}/config" : "${projectDir}/nevermore/config"
 
 
 process concat_singles {
@@ -50,6 +53,7 @@ workflow nevermore_simple_preprocessing {
 
 			qc_bbduk_stepwise_amplicon(fastq_ch, "${projectDir}/assets/adapters.fa")
 			processed_reads_ch = processed_reads_ch.concat(qc_bbduk_stepwise_amplicon.out.reads)
+			orphans_ch = orphans_ch.concat(qc_bbduk_stepwise_amplicon.out.orphans)
 
 		} else {
 
@@ -95,8 +99,6 @@ workflow nevermore_preprocessing {
 
 		singlelib_reads_ch = qc_bbduk.out.reads
 			.filter { it[1].size() != 2 }
-
-		paired_reads_ch.view()
 
 		/* merge_pairs implies that we want to keep the merged reads, which are 'longer single-ends' */
 
@@ -154,34 +156,4 @@ workflow nevermore_preprocessing {
 	emit:
 		paired_reads = paired_out_ch
 		single_reads = single_out_ch
-}
-
-
-workflow {
-
-    fastq_ch = Channel
-        .fromPath(params.input_dir + "/" + "**.{fastq,fq,fastq.gz,fq.gz}")
-        .map { file ->
-                def sample = file.name.replaceAll(/.(fastq|fq)(.gz)?$/, "")
-                sample = sample.replaceAll(/_R?[12]$/, "")
-                return tuple(sample, file)
-        }
-        .groupTuple(sort: true)
-		.map { classify_sample(it[0], it[1]) }
-
-	//fastq_ch.view()
-
-	qc_bbduk(fastq_ch)
-
-	qc_reads_ch = qc_bbduk.out.reads
-		.map { classify_sample(it[0], it[1] ) }
-
-	qc_reads_ch.view()
-
-
-	//nevermore_preprocessing(fastq_ch)
-
-	//nevermore_preprocessing.out.paired_reads.view()
-	//nevermore_preprocessing.out.single_reads.view()
-
 }
