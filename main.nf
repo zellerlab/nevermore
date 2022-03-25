@@ -6,6 +6,7 @@ include { nevermore_simple_preprocessing } from "./nevermore/workflows/nevermore
 include { classify_sample } from "./nevermore/modules/functions"
 include { remove_host_kraken2_individual; remove_host_kraken2 } from "./nevermore/modules/decon/kraken2"
 include { prepare_fastqs } from "./nevermore/modules/converters/prepare_fastqs"
+include { gffquant_flow } from "./gffquant/modules/gffquant"
 
 def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
 
@@ -195,5 +196,6 @@ workflow {
 	aligned_ch.view()
 
 	merge_and_sort(aligned_ch)
+	gffquant_flow(merge_and_sort.out.bam)
 	//gffquant(merge_and_sort.out.bam, params.gffquant_db)
 }
