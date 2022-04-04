@@ -67,6 +67,23 @@ process merge_and_sort {
 }
 
 
+process merge_single_fastqs {
+	input:
+	tuple val(sample), path(fastqs)
+
+	output:
+	tuple val(sample), path("merged/${sample.id}_R1.fastq.gz"), emit: fastq
+
+	script:
+	"""
+	mkdir -p merged/
+
+	cat *.fastq.gz > merged/${sample.id}_R1.fastq.gz
+	"""
+
+}
+
+
 workflow nevermore_align {
 
 	take:
@@ -74,6 +91,27 @@ workflow nevermore_align {
 		fastq_ch
 
 	main:
+
+		single_ch = fastq_ch
+			.filter { it[0].is_paired == false }
+			.map { sample, fastq ->
+				sample.id = sample.id.replaceAll(/.(orphans|singles|chimeras)$/, ".singles")
+				return tuple(sample.id, fastq)
+			}
+			.groupTuple(sort: true)
+			.map { sample_id, files ->
+				def meta = [:]
+				meta.id = sample_id
+				meta.is_paired = false
+				return tuple(meta, files)
+			}
+
+		merge_single_fastqs(single_ch)
+
+		paired_ch = fastq_ch
+			.filter { it[0].is_paired }
+
+		fastq_ch = paired_ch.concat(merge_single_fastqs.out.fastq)
 
 		fastqc(fastq_ch, "qc")
 		multiqc(
@@ -91,21 +129,18 @@ workflow nevermore_align {
 			}
 			.groupTuple(sort: true)
 
-		aligned_ch.view()
-
-		merge_and_sort(aligned_ch)		
+		merge_and_sort(aligned_ch)
 
 	emit:
 
 		alignments = merge_and_sort.out.bam
-
 }
 
 
 workflow {
 
 	fastq_ch = Channel
-		.fromPath(params.input_dir + "/" + "**.{fastq,fq,fastq.gz,fq.gz}")
+		.fromPath(params.input_dir + "/" + "**.{fastq.gz,fq.gz}")
 		.map { file ->
 				def sample = file.name.replaceAll(/.(fastq|fq)(.gz)?$/, "")
 				sample = sample.replaceAll(/_R?[12]$/, "")
@@ -152,6 +187,8 @@ workflow {
 
 	}
 
+
+	preprocessed_ch.view()
 	nevermore_align(preprocessed_ch)
 
 	gffquant_flow(nevermore_align.out.alignments)
