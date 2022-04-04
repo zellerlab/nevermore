@@ -7,8 +7,12 @@ include { classify_sample } from "./nevermore/modules/functions"
 include { remove_host_kraken2_individual; remove_host_kraken2 } from "./nevermore/modules/decon/kraken2"
 include { prepare_fastqs } from "./nevermore/modules/converters/prepare_fastqs"
 include { gffquant_flow } from "./gffquant/modules/gffquant"
+include { fastqc } from "./nevermore/modules/qc/fastqc"
+include { multiqc } from "./nevermore/modules/qc/multiqc"
 
 def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
+
+def config_dir = (projectDir.endsWith("nevermore")) ? "${projectDir}/config" : "${projectDir}/nevermore/config"
 
 
 process bwa_mem_align {
@@ -41,22 +45,61 @@ process merge_and_sort {
 
 	output:
 	tuple val(sample), path("bam/${sample}.bam"), emit: bam
+	tuple val(sample), path("stats/${sample}.flagstats.txt"), emit: flagstats
 
 	script:
 	// need a better detection for this
 	if (bamfiles instanceof Collection && bamfiles.size() >= 2) {
 		"""
-		mkdir -p bam/
+		mkdir -p bam/ stats/
 		samtools merge -@ $task.cpus bam/${sample}.bam ${bamfiles}
+		samtools flagstats bam/${sample}.bam > stats/${sample}.flagstats.txt
 		"""
 	} else {
 		// i don't like this solution
 		"""
-		mkdir -p bam
-		ln -s ${bamfiles[0]} bam/${sample}.bam
+		mkdir -p bam/ stats/
+		ln -s ../${bamfiles[0]} bam/${sample}.bam
+		samtools flagstats bam/${sample}.bam > stats/${sample}.flagstats.txt
 		"""
 	}
 }
+
+workflow nevermore_align {
+
+	take:
+
+		fastq_ch
+
+	main:
+
+		fastqc(fastq_ch)
+		multiqc(
+			fastqc.out.reports.map { sample, report -> report }.collect(),
+			"${config_dir}/multiqc.config"
+		)	
+
+		bwa_mem_align(fastq_ch, params.reference)
+
+		aligned_ch = bwa_mem_align.out.bam
+			.map { sample, bam ->
+				sample_id = sample.id.replaceAll(/.(orphans|singles|chimeras)$/, "")
+				return tuple(sample_id, bam)
+			}
+			.groupTuple(sort: true)
+
+		aligned_ch.view()
+
+		merge_and_sort(aligned_ch)		
+
+	emit:
+
+		alignments = merge_and_sort.out.bam
+
+}
+
+
+
 
 process gffquant {
 	publishDir params.output_dir, mode: params.publish_mode
@@ -184,7 +227,9 @@ workflow {
 
 	}
 
-	bwa_mem_align(preprocessed_ch, params.reference)
+	nevermore_align(preprocessed_ch) //, params.reference)
+
+	/* bwa_mem_align(preprocessed_ch, params.reference)
 
 	aligned_ch = bwa_mem_align.out.bam
 		.map { sample, bam ->
@@ -196,6 +241,8 @@ workflow {
 	aligned_ch.view()
 
 	merge_and_sort(aligned_ch)
-	gffquant_flow(merge_and_sort.out.bam)
+	*/
+
+	gffquant_flow(nevermore_align.out.alignments)
 	//gffquant(merge_and_sort.out.bam, params.gffquant_db)
 }
