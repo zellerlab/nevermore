@@ -1,5 +1,5 @@
 process run_gffquant {
-	publishDir "${output_dir}", mode: params.publish_mode
+	publishDir "${params.output_dir}", mode: params.publish_mode
 
 	input:
 	tuple val(sample), path(bam)
@@ -13,12 +13,12 @@ process run_gffquant {
 	"""
 	echo $sample $bam
 	mkdir -p logs/
-	gffquant ${db} ${bam} -o ${sample}/${sample} -m ${params.mode} --ambig_mode ${params.ambig_mode} ${emapper_version} ${params.strand_specific} > logs/${sample}.o 2> logs/${sample}.e
+	gffquant ${db} ${bam} -o ${sample}/${sample} ${params.gffquant_params} > logs/${sample}.o 2> logs/${sample}.e
 	"""
 }
 
 process collate_feature_counts {
-	publishDir "${output_dir}", mode: params.publish_mode
+	publishDir "${params.output_dir}", mode: params.publish_mode
 
 	input:
 	tuple val(sample), path(count_tables)
