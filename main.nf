@@ -36,6 +36,7 @@ process bwa_mem_align {
 
 }
 
+
 process merge_and_sort {
 	label 'samtools'
 	publishDir params.output_dir, mode: params.publish_mode
@@ -64,6 +65,7 @@ process merge_and_sort {
 		"""
 	}
 }
+
 
 workflow nevermore_align {
 
@@ -97,31 +99,6 @@ workflow nevermore_align {
 
 		alignments = merge_and_sort.out.bam
 
-}
-
-
-
-
-process gffquant {
-	publishDir params.output_dir, mode: params.publish_mode
-
-	input:
-	tuple val(sample), path(bam)
-	path(annotation_db)
-
-	output:
-	path "${sample}/${sample}.seqname.uniq.txt", emit: uniq_seq
-	path "${sample}/${sample}.seqname.dist1.txt", emit: dist1_seq
-	path "${sample}/${sample}.feature_counts.txt", emit: feat_counts
-	path "${sample}/${sample}.gene_counts.txt", emit: gene_counts
-	path "${sample}/${sample}.covsum.txt", emit: covsum
-
-	script:
-
-	"""
-	mkdir -p ${sample}
-	gffquant ${annotation_db} ${bam} -o ${sample}/${sample} -m ${params.gffquant_mode} --ambig_mode ${params.gffquant_amode}
-	"""
 }
 
 
@@ -175,21 +152,7 @@ workflow {
 
 	}
 
-	nevermore_align(preprocessed_ch) //, params.reference)
-
-	/* bwa_mem_align(preprocessed_ch, params.reference)
-
-	aligned_ch = bwa_mem_align.out.bam
-		.map { sample, bam ->
-			sample_id = sample.id.replaceAll(/.(orphans|singles|chimeras)$/, "")
-			return tuple(sample_id, bam)
-		}
-		.groupTuple(sort: true)
-
-	aligned_ch.view()
-
-	merge_and_sort(aligned_ch)
-	*/
+	nevermore_align(preprocessed_ch)
 
 	gffquant_flow(nevermore_align.out.alignments)
 }
