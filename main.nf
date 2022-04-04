@@ -73,10 +73,11 @@ workflow nevermore_align {
 
 	main:
 
-		fastqc(fastq_ch)
+		fastqc(fastq_ch, "qc")
 		multiqc(
 			fastqc.out.reports.map { sample, report -> report }.collect(),
-			"${config_dir}/multiqc.config"
+			"${config_dir}/multiqc.config",
+			"qc"
 		)	
 
 		bwa_mem_align(fastq_ch, params.reference)
