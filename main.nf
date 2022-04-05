@@ -6,7 +6,7 @@ include { nevermore_simple_preprocessing } from "./nevermore/workflows/nevermore
 include { classify_sample } from "./nevermore/modules/functions"
 include { remove_host_kraken2_individual; remove_host_kraken2 } from "./nevermore/modules/decon/kraken2"
 include { prepare_fastqs } from "./nevermore/modules/converters/prepare_fastqs"
-include { gffquant_flow } from "./gffquant/modules/gffquant"
+include { gffquant_flow } from "./gffquant/workflows/gffquant"
 include { fastqc } from "./nevermore/modules/qc/fastqc"
 include { multiqc } from "./nevermore/modules/qc/multiqc"
 
@@ -188,7 +188,6 @@ workflow {
 	}
 
 
-	preprocessed_ch.view()
 	nevermore_align(preprocessed_ch)
 
 	gffquant_flow(nevermore_align.out.alignments)
