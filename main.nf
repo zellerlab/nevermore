@@ -15,6 +15,23 @@ def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
 def config_dir = (projectDir.endsWith("nevermore")) ? "${projectDir}/config" : "${projectDir}/nevermore/config"
 
 
+process collate_stats {
+	publishDir params.output_dir, mode: params.publish_mode
+
+	input:
+	path(stats_files)
+
+	output:
+	path("reports/read_count_table.txt")
+
+	script:
+	"""
+	mkdir -p reports/
+	collate_stats.py . > reports/read_count_table.txt
+	"""
+}
+
+
 process bwa_mem_align {
 	label 'align'
 
@@ -29,9 +46,10 @@ process bwa_mem_align {
 	def align_cpus = 4 // figure out the groovy division garbage later (task.cpus >= 8) ?
 	def sort_cpus = 4
 	def reads2 = (sample.is_paired) ? "${sample.id}_R2.fastq.gz" : ""
+	def blocksize = "-K 100000000"  // shamelessly taken from NGLess
 
 	"""
-	bwa mem -a -t ${align_cpus} \$(readlink ${reference}) ${sample.id}_R1.fastq.gz ${reads2} | samtools view -F 4 -buSh - | samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
+	bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.fastq.gz ${reads2} | samtools view -F 4 -buSh - | samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
 	"""
 
 }
@@ -109,16 +127,21 @@ workflow nevermore_align {
 		paired_ch = fastq_ch
 			.filter { it[0].is_paired == true }
 			.map { sample, fastq ->
-				sample.merged = true
-				return tuple(sample, fastq)
+				def meta = [:]
+				meta.id = sample.id
+				meta.is_paired = true
+				meta.merged = true
+				return tuple(meta, fastq)
 			}
 
 		/*	group all single-read files by sample and route into merge-channel */
 
 		merged_single_ch = single_ch
 			.map { sample, fastq ->
-				sample.id = sample.id.replaceAll(/.(orphans|singles|chimeras)$/, ".singles")
-				return tuple(sample.id, fastq)
+				return tuple(
+					sample.id.replaceAll(/.(orphans|singles|chimeras)$/, ".singles"),
+					fastq
+				)
 			}
 			.groupTuple(sort: true)
 			.map { sample_id, files ->
@@ -186,6 +209,8 @@ workflow nevermore_align {
 	emit:
 
 		alignments = merge_and_sort.out.bam
+		read_counts = fastqc.out.counts
+		aln_counts = merge_and_sort.out.flagstats
 
 }
 
@@ -244,4 +269,27 @@ workflow {
 	nevermore_align(preprocessed_ch)
 
 	gffquant_flow(nevermore_align.out.alignments)
+
+	if (do_preprocessing) {
+
+		collate_ch = nevermore_simple_preprocessing.out.read_counts
+			.map { sample, file -> return file }
+			.collect()
+			.concat(
+				nevermore_align.out.read_counts
+					.map { sample, file -> return file }
+					.collect()
+			)
+			.concat(
+				nevermore_align.out.aln_counts
+					.map { sample, file -> return file }
+					.collect()
+			)
+			.collect()
+		// collate_ch.view()
+		collate_stats(
+			collate_ch
+		)
+
+	}
 }
