@@ -43,13 +43,18 @@ process bwa_mem_align {
 	tuple val(sample), path("${sample.id}.bam"), emit: bam
 
 	script:
+	def maxmem = task.memory.toGiga()
 	def align_cpus = 4 // figure out the groovy division garbage later (task.cpus >= 8) ?
 	def sort_cpus = 4
-	def reads2 = (sample.is_paired) ? "${sample.id}_R2.fastq.gz" : ""
-	def blocksize = "-K 100000000"  // shamelessly taken from NGLess
+	def reads2 = (sample.is_paired) ? "${sample.id}_R2.sorted.fastq.gz" : ""
+	def sort_reads2 = (sample.is_paired) ? "sortbyname.sh -Xmx${maxmem}g in=${sample.id}_R2.fastq.gz out=${sample.id}_R2.sorted.fastq.gz" : ""
+	def blocksize = "-K 10000000"  // shamelessly taken from NGLess
 
 	"""
-	bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.fastq.gz ${reads2} | samtools view -F 4 -buSh - | samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
+	set -e -o pipefail
+	sortbyname.sh -Xmx${maxmem}g in=${sample.id}_R1.fastq.gz out=${sample.id}_R1.sorted.fastq.gz
+	${sort_reads2}
+	bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.sorted.fastq.gz ${reads2} | samtools view -F 4 -buSh - | samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
 	"""
 
 }
@@ -96,7 +101,7 @@ process merge_single_fastqs {
 	"""
 	mkdir -p merged/
 
-	cat *.fastq.gz > merged/${sample.id}_R1.fastq.gz
+	cat *.fastq.gz | sortbyname.sh in=stdin.gz out=merged/${sample.id}_R1.fastq.gz
 	"""
 
 }
