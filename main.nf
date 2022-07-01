@@ -38,6 +38,7 @@ process bwa_mem_align {
 	input:
 	tuple val(sample), path(reads)
 	path(reference)
+	val(do_name_sort)
 
 	output:
 	tuple val(sample), path("${sample.id}.bam"), emit: bam
@@ -50,12 +51,15 @@ process bwa_mem_align {
 	def sort_reads2 = (sample.is_paired) ? "sortbyname.sh -Xmx${maxmem}g in=${sample.id}_R2.fastq.gz out=${sample.id}_R2.sorted.fastq.gz" : ""
 	def blocksize = "-K 10000000"  // shamelessly taken from NGLess
 
+	def sort_cmd = (do_name_sort) ? "samtools collate -@ ${sort_cpus} -o ${sample.id}.bam -" : "samtools sort -@ ${sort_cpus} -o ${sample.id}.bam -"
+
 	"""
 	set -e -o pipefail
 	sortbyname.sh -Xmx${maxmem}g in=${sample.id}_R1.fastq.gz out=${sample.id}_R1.sorted.fastq.gz
 	${sort_reads2}
-	bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.sorted.fastq.gz ${reads2} | samtools view -F 4 -buSh - | samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
+	bwa mem -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${sample.id}_R1.sorted.fastq.gz ${reads2} | samtools view -F 4 -buSh - | ${sort_cmd}
 	"""
+	// samtools sort -@ ${sort_cpus} -o ${sample.id}.bam
 
 }
 
@@ -66,17 +70,19 @@ process merge_and_sort {
 
 	input:
 	tuple val(sample), path(bamfiles)
+	val(do_name_sort)
 
 	output:
 	tuple val(sample), path("bam/${sample}.bam"), emit: bam
 	tuple val(sample), path("stats/bam/${sample}.flagstats.txt"), emit: flagstats
 
 	script:
+	def sort_order = (do_name_sort) ? "-n" : ""
 	// need a better detection for this
 	if (bamfiles instanceof Collection && bamfiles.size() >= 2) {
 		"""
 		mkdir -p bam/ stats/bam
-		samtools merge -@ $task.cpus bam/${sample}.bam ${bamfiles}
+		samtools merge -@ $task.cpus ${sort_order} bam/${sample}.bam ${bamfiles}
 		samtools flagstats bam/${sample}.bam > stats/bam/${sample}.flagstats.txt
 		"""
 	} else {
@@ -196,7 +202,8 @@ workflow nevermore_align {
 
 		bwa_mem_align(
 			paired_ch.concat(merge_single_fastqs.out.fastq),
-			params.reference
+			params.reference,
+			true
 		)
 
 		/*	merge paired-end and single-read alignments into single per-sample bamfiles */
@@ -208,7 +215,7 @@ workflow nevermore_align {
 			}
 			.groupTuple(sort: true)
 
-		merge_and_sort(aligned_ch)
+		merge_and_sort(aligned_ch, true)
 
 
 	emit:
@@ -273,7 +280,11 @@ workflow {
 
 	nevermore_align(preprocessed_ch)
 
-	gffquant_flow(nevermore_align.out.alignments)
+	if (!params.skip_profiling) {
+
+		gffquant_flow(nevermore_align.out.alignments)
+
+	}
 
 	if (do_preprocessing) {
 
