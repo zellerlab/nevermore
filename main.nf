@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 
 include { classify_sample } from "./nevermore/modules/functions"
 include { nevermore_main } from "./nevermore/workflows/nevermore"
-include { gffquant_flow } from "./gffquant/workflows/gffquant"
+include { gffquant_flow } from "./nevermore/workflows/gffquant"
 
 
 workflow {
