@@ -2,23 +2,36 @@
 
 nextflow.enable.dsl=2
 
-include { classify_sample } from "./nevermore/modules/functions"
 include { nevermore_main } from "./nevermore/workflows/nevermore"
 include { gffquant_flow } from "./nevermore/workflows/gffquant"
+include { fastq_input } from "./nevermore/workflows/input"
+
+if (params.input_dir && params.remote_input_dir) {
+	log.info """
+		Cannot process both --input_dir and --remote_input_dir. Please check input parameters.
+	""".stripIndent()
+	exit 1
+} else if (!params.input_dir && !params.remote_input_dir) {
+	log.info """
+		Neither --input_dir nor --remote_input_dir set.
+	""".stripIndent()
+	exit 1
+}
+
+def input_dir = (params.input_dir) ? params.input_dir : params.remote_input_dir
+
+
+
 
 
 workflow {
 
-	fastq_ch = Channel
-		.fromPath(params.input_dir + "/" + "**.{fastq.gz,fq.gz}")
-		.map { file ->
-				def sample = file.name.replaceAll(/.(fastq|fq)(.gz)?$/, "")
-				sample = sample.replaceAll(/_R?[12]$/, "")
-				return tuple(sample, file)
-		}
-		.groupTuple(sort: true)
-        .map { classify_sample(it[0], it[1]) }
+	fastq_input(
+		Channel.fromPath(input_dir + "/*", type: "dir")
+	)
 
+	fastq_ch = fastq_input.out.fastqs
+	
 	nevermore_main(fastq_ch)
 
 	if (!params.skip_profiling) {
