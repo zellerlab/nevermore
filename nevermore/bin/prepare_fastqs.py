@@ -104,7 +104,9 @@ def process_sample(
 	 - whether fastq files are located on remote file system
 	"""
 
-	if len(fastqs) == 1:
+	if not fastqs:
+		...
+	elif len(fastqs) == 1:
 		# remove potential "single(s)" string from single fastq file name prefix
 		sample_sub = re.sub(r"[._]singles?", "", sample)
 		# 20221018: and attach it at the end of the sample name
