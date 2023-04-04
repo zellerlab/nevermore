@@ -47,6 +47,25 @@ process db_filter {
     """
 }
 
+
+process readcount {
+    label 'samtools'
+
+    input:
+    tuple val(sample), path(bam)
+
+    output:
+    tuple val(sample), path("${sample}.readcounts.txt"), emit: readcounts
+
+    script:
+    """
+    set -e -o pipefail
+    mkdir -p tmp/
+    samtools view ${sample}.bam | cut -f 1 | uniq | sort -u -T tmp/ | wc -l > ${sample}.readcounts.txt
+    """
+}
+
+
 process db2bed3 {
     input:
     path(db)
@@ -56,6 +75,13 @@ process db2bed3 {
 
     script:
     """
-    sqlite3 ${db} 'select seqid,start,end from annotatedsequence;' '.exit' | awk -F \\| -v OFS='\\t' '{print \$1,\$2-1,\$3}' | sort -k1,1 -k2,2g -k3,3g > db.bed3
+    cp -v ${db} db.sqlite3
+    sqlite3 db.sqlite3 'select seqid,start,end from annotatedsequence;' '.exit' | awk -F \\| -v OFS='\\t' '{print \$1,\$2-1,\$3}' | sort -k1,1 -k2,2g -k3,3g > db.bed3
+    rm -v db.sqlite3*
+
+    if [[ ! -s db.bed3 ]]; then
+        echo 'Empty database!' >> /dev/stderr
+        exit 1
+    fi
     """
 }

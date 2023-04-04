@@ -32,7 +32,7 @@ process transfer_bams {
 	script:
 		"""
 		mkdir -p bam/
-		find . -maxdepth 1 -type l -name '*.bam' | xargs -I {} readlink {} | xargs -I {} rsync -avP {} bam/
+		find . -maxdepth 1 -type l -name '*.bam' | xargs -I {} readlink {} | xargs -I {} rsync -vP {} bam/
 		"""
 }
 
@@ -55,7 +55,6 @@ process prepare_fastqs {
 		"""
 		prepare_fastqs.py -i . -o fastq/ -p ${input_dir_prefix} ${custom_suffixes} ${remote_option} ${remove_suffix}
 		"""
-		// mkdir -p fastq/
 }
 
 
