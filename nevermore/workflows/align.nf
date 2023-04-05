@@ -159,8 +159,6 @@ workflow nevermore_align {
 		fastq_ch
 
 	main:
-
-		fastq_ch.view()
 		
 		/*	align merged single-read and paired-end sets against reference */
 
