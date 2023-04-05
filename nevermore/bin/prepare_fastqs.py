@@ -222,13 +222,29 @@ def is_fastq(f, valid_fastq_suffixes, valid_compression_suffixes):
 	 - true if file is fastq else false
 
 	"""
-	prefix, suffix = os.path.splitext(f)
-	if suffix in valid_fastq_suffixes:
-		return True
-	if suffix in valid_compression_suffixes:
-		_, suffix = os.path.splitext(prefix)
-		return suffix in valid_fastq_suffixes
-	return False
+	filename_tokens = re.split(r"[._]", os.path.basename(f))
+	try:
+		fastq_suffix, *compression_suffix = filename_tokens[-2:]
+	except ValueError:
+		return False
+
+	valid_compression = not compression_suffix or compression_suffix[0] in valid_compression_suffixes
+
+	return os.path.isfile(f) and valid_compression and fastq_suffix in valid_fastq_suffixes
+
+	# if not compression_suffix:
+	# 	return fq_suffix in valid_fastq_suffixes
+	# else:
+	# 	return compression_suffix[0] in valid_compression_suffixes and fq_suffix in valid_fastq_suffixes
+
+
+	# prefix, suffix = os.path.splitext(f)
+	# if suffix in valid_fastq_suffixes:
+	# 	return True
+	# if suffix in valid_compression_suffixes:
+	# 	_, suffix = os.path.splitext(prefix)
+	# 	return suffix in valid_fastq_suffixes
+	# return False
 
 
 def main():
@@ -243,9 +259,9 @@ def main():
 
 	args = ap.parse_args()
 
-	valid_fastq_suffixes = tuple(f".{suffix}" for suffix in args.valid_fastq_suffixes.split(","))
+	valid_fastq_suffixes = tuple(f"{suffix}" for suffix in args.valid_fastq_suffixes.split(","))
 	print(valid_fastq_suffixes)
-	valid_compression_suffixes = tuple(f".{suffix}" for suffix in args.valid_compression_suffixes.split(","))
+	valid_compression_suffixes = tuple(f"{suffix}" for suffix in args.valid_compression_suffixes.split(","))
 	print(valid_compression_suffixes)
 
 	fastq_file_suffix_pattern = r"[._](" + \
@@ -260,7 +276,7 @@ def main():
 		return sorted(
 				os.path.join(input_dir, f)
 				for f in os.listdir(input_dir)
-				if is_fastq(f, valid_fastq_suffixes, valid_compression_suffixes)
+				if is_fastq(os.path.join(input_dir, f), valid_fastq_suffixes, valid_compression_suffixes)
 			)
 
 	try:
@@ -281,7 +297,7 @@ def main():
 	root_fastqs = collect_fastq_files(args.input_dir, valid_fastq_suffixes, valid_compression_suffixes)
 
 	if samples and root_fastqs:
-		raise ValueError("Found {len(root_fastqs)} fastq files in input directory together with {len(samples)} sample directories. Please check input data.")
+		raise ValueError(f"Found {len(root_fastqs)} fastq files in input directory together with {len(samples)} sample directories. Please check input data.")
 	elif root_fastqs:
 		for f in root_fastqs:
 			sample = re.sub(fastq_file_suffix_pattern, "", os.path.basename(f))
