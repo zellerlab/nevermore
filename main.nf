@@ -35,9 +35,15 @@ workflow {
 	
 	nevermore_main(fastq_ch)
 
-	if (!params.skip_profiling) {
+	if (params.run_gffquant) {
 
 		gffquant_flow(nevermore_main.out.alignments)
+
+	}
+
+	if (params.run_motus) {
+
+		motus(nevermore_main.out.fastqs, params.motus_db)
 
 	}
 

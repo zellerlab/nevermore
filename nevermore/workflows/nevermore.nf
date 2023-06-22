@@ -11,12 +11,13 @@ include { collate_stats } from "../modules/collate"
 include { nevermore_align; nevermore_prep_align } from "./align"
 
 def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
-
+def do_alignment = params.run_gffquant || !params.skip_alignment
 
 workflow nevermore_main {
 
 	take:
 		fastq_ch
+		
 
 	main:
 		if (do_preprocessing) {
@@ -71,7 +72,7 @@ workflow nevermore_main {
 			)
 		}			
 
-		if (!params.skip_alignment) {
+		if (do_alignment) {
 			nevermore_align(nevermore_prep_align.out.fastqs)
 			align_ch = nevermore_align.out.alignments
 	

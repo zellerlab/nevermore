@@ -122,6 +122,13 @@ gffquant_db: "/scratch/mocat/freezer/catalogs/GMGC/v1.0.1/GMGC10.emapper2.annota
 gffquant_params: "-m genes --ambig_mode 1overN"
 
 
+motus_database: "/g/scb/zeller/fspringe/Software/mOTUs/motus/share/motus-2.6.0/db_mOTU"
+
+# motus parameters
+motus_min_length: 30  # -l
+motus_n_marker_genes: 1  # -g
+motus_tax_level: "genus"  # -k
+
 
 
 
