@@ -37,7 +37,26 @@ workflow {
 
 	if (params.run_gffquant) {
 
-		gffquant_flow(nevermore_main.out.alignments)
+		if (params.gq_stream) {
+			gq_input_ch = nevermore_main.out.fastqs
+				.map { sample, fastqs ->
+				sample_id = sample.id.replaceAll(/.(orphans|singles|chimeras)$/, "")
+				return tuple(sample_id, [fastqs].flatten())
+			}
+			.groupTuple()
+			.map { sample_id, fastqs -> return tuple(sample_id, fastqs.flatten()) }
+			gq_input_ch.view()
+			//.groupTuple(sort: true)
+
+		} else {
+
+			gq_input_ch = nevermore_main.out.alignments
+
+		}
+
+		// gq_input_ch = ((params.gq_stream) ? nevermore_main.out.fastqs : never_main.out.alignments)
+		// 	.map { sample, files -> return tuple(sample.id, files) }
+		gffquant_flow(gq_input_ch)		
 
 	}
 

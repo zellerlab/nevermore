@@ -1,3 +1,70 @@
+params.gq_aligner = "bwa_mem"
+
+process stream_gffquant {
+	label "gffquant"
+	tag "gffquant.${sample}"
+
+	input:
+		tuple val(sample), path(fastqs)
+		path(gq_db)
+		path(reference)
+	output:
+		tuple val(sample), path("profiles/${sample}/*.txt.gz"), emit: results
+		tuple val(sample), path("logs/${sample}.log")
+
+	script:
+			def gq_output = "-o profiles/${sample}/${sample}"
+
+			def gq_params = "-m ${params.gq_mode} --ambig_mode ${params.gq_ambig_mode}"
+			gq_params += (params.gq_strand_specific) ? " --strand_specific" : ""
+			gq_params += (params.gq_min_seqlen) ? (" --min_seqlen " + params.gq_min_seqlen) : ""
+			gq_params += (params.gq_min_identity) ? (" --min_identity " + params.gq_min_identity) : ""
+			gq_params += (params.gq_restrict_metrics) ? " --restrict_metrics ${params.gq_restrict_metrics}" : ""
+			gq_params += (params.gq_keep_alignments) ? " --keep_alignment_file ${sample}.sam" : ""
+			gq_params += " -t ${task.cpus}"
+
+			if (params.gq_mode == "domain") {
+				gq_params += " --db_separator , --db_coordinates hmmer"
+			}
+
+			def input_files = ""
+			// we cannot auto-detect SE vs. PE-orphan!
+			if (params.gq_single_end_library) {
+				//input_files += "--singles \$(find . -maxdepth 1 -type l -name '*_R1.fastq.gz')"	
+				input_files += "--fastq-singles ${fastqs}"
+			} else {
+				r1_files = fastqs.findAll( { it.name.endsWith("_R1.fastq.gz") && !it.name.matches("(.*)singles(.*)") } )
+				r2_files = fastqs.findAll( { it.name.endsWith("_R2.fastq.gz") } )
+				orphans = fastqs.findAll( { it.name.matches("(.*)singles(.*)") } )
+
+				if (r1_files.size() != 0) {
+					input_files += "--fastq-r1 ${r1_files.join(' ')}"
+				}
+				if (r2_files.size() != 0) {
+					input_files += " --fastq-r2 ${r2_files.join(' ')}"
+				}
+				if (orphans.size() != 0) {
+					input_files += " --fastq-orphans ${orphans.join(' ')}"
+				}
+
+				// input_files += "--fastq-r1 \$(find . -maxdepth 1 -type l -name '*_R1.fastq.gz' | grep -v singles)"
+				// input_files += " --fastq-r2 \$(find . -maxdepth 1 -type l -name '*_R2.fastq.gz')"
+				// input_files += " --fastq-orphans \$(find . -maxdepth 1 -type l -name '*singles*.fastq.gz')"
+			}
+	
+			def gq_cmd = "gffquant ${gq_output} ${gq_params} --db GQ_DATABASE --reference \$(readlink ${reference}) --aligner ${params.gq_aligner} ${input_files}"
+
+			"""
+			set -e -o pipefail
+			mkdir -p logs/ tmp/ profiles/
+			echo 'Copying database...'
+			cp -v ${gq_db} GQ_DATABASE
+			${gq_cmd} &> logs/${sample}.log
+			rm -rfv GQ_DATABASE* tmp/
+			"""
+
+}
+
 process run_gffquant {
 	label "gffquant"
 
