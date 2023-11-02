@@ -19,6 +19,7 @@ process qc_bbduk {
     def orphan_check = ""
 
     def bb_params = params.qc_params_shotgun.replaceAll(/maq=([0-9])+/, "qtrim=\1")
+    def trim_params = "${bb_params} ref=${adapters} minlen=${params.qc_minlen}"
     
     if (sample.is_paired) {
         def orphans = "qc_reads/${sample.id}/${sample.id}.orphans_R1.fastq.gz"
@@ -33,7 +34,6 @@ process qc_bbduk {
 
     def read1 = "in1=${sample.id}_R1.fastq.${compression} out1=qc_reads/${sample.id}/${sample.id}_R1.fastq.gz"
     
-    def trim_params = "${bb_params} ref=${adapters} minlen=${params.qc_minlen}"
     def stats_out = "stats=stats/qc/bbduk/${sample.id}.bbduk_stats.txt"
 
     """
