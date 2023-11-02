@@ -24,7 +24,7 @@ process qc_bbduk {
     if (sample.is_paired) {
         def orphans = "qc_reads/${sample.id}/${sample.id}.orphans_R1.fastq.gz"
         read2 = "in2=${sample.id}_R2.fastq.${compression} out2=qc_reads/${sample.id}/${sample.id}_R2.fastq.gz outs=stdout.fq"
-        read2 += " | bbduk.sh -Xmx${maxmem}g t=${task.cpus} ${trim_params} in=stdin.fq out=${orphans}"
+        read2 += " | bbduk.sh -Xmx${maxmem}g t=${task.cpus} ${trim_params} in=stdin.fq out=${orphans} int=f"
         orphan_check = """
         if [[ -z "\$(gzip -dc ${orphans} | head -n 1)" ]]; then
 			rm ${orphans}
