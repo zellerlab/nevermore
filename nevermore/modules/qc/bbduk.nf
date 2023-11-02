@@ -18,7 +18,7 @@ process qc_bbduk {
     def read2 = ""
     def orphan_check = ""
 
-    def bb_params = params.qc_params_shotgun.replaceAll(/maq=([0-9])+/, "qtrim=\$1")
+    def bb_params = params.qc_params_shotgun.replaceAll(/maq=([0-9]+)/, "qtrim=\$1")
     def trim_params = "${bb_params} ref=${adapters} minlen=${params.qc_minlen}"
     
     if (sample.is_paired) {
