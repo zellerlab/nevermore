@@ -12,7 +12,7 @@ process qc_bbduk {
     tuple val(sample), path("qc_reads/${sample.id}/BBDUK_FINISHED"), emit: sentinel
 
     script:
-    def maxmem = task.memory.toGiga()
+    def maxmem = task.memory.toGiga().intdiv(2) 
     def compression = (reads[0].name.endsWith("gz")) ? "gz" : "bz2"
 
     def read2 = ""
