@@ -57,9 +57,10 @@ workflow nevermore_prep_align {
 			}
 		.set { single_reads_ch }
 
-		
+		def se_group_size = 3 - (params.drop_chimeras ? 1 : 0) - (params.drop_orphans ? 1 : 0)
+
 		single_reads_ch.paired_end
-			.groupTuple(sort: true, size: 3, remainder: true)
+			.groupTuple(sort: true, size: se_group_size, remainder: true)
 			.branch {
 				merge: it[1].size() > 1
 				no_merge: true
