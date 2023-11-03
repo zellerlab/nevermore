@@ -57,34 +57,59 @@ workflow nevermore_prep_align {
 			}
 		.set { single_reads_ch }
 
-		merged_single_ch = single_reads_ch.single_end
-			.map { sample, fastq  ->
-				return tuple(sample.id, fastq)
+		
+		single_reads_ch.paired_end
+			.groupTuple(sort: true, size: 3, remainder: true)
+			.branch {
+				merge: it[1].size() > 1
+				no_merge: true
 			}
-			.groupTuple(sort: true)
-			.map { sample_id, files ->
-				def meta = [:]
-				meta.id = sample_id
-				meta.is_paired = false
-				meta.library = "single"
-				meta.merged = true
-				return tuple(meta, files)
-			}
-			.concat(
-				single_reads_ch.paired_end
-					.map { sample, fastq  ->
-						return tuple(sample.id, fastq)
-					}
-					.groupTuple(sort: true)
-					.map { sample_id, files ->
-						def meta = [:]
-						meta.id = sample_id
-						meta.is_paired = false
-						meta.library = "paired"
-						meta.merged = true
-						return tuple(meta, files)
-					}
-			)
+			.set { pe_singles_ch }
+
+		merged_single_ch = pe_singles_ch.merge
+		
+
+
+			// .map { sample, fastq  ->
+			// 	return tuple(sample.id, fastq)
+			// }
+			// .map { sample_id, files ->
+			// 	def meta = [:]
+			// 	meta.id = sample_id
+			// 	meta.is_paired = false
+			// 	meta.library = "paired"
+			// 	meta.merged = true
+			// 	return tuple(meta, files)
+			// }
+
+		// merged_single_ch = single_reads_ch.single_end
+		// 	.map { sample, fastq  ->
+		// 		return tuple(sample.id, fastq)
+		// 	}
+		// 	.groupTuple(sort: true)
+		// 	.map { sample_id, files ->
+		// 		def meta = [:]
+		// 		meta.id = sample_id
+		// 		meta.is_paired = false
+		// 		meta.library = "single"
+		// 		meta.merged = true
+		// 		return tuple(meta, files)
+		// 	}
+		// 	.concat(
+		// 		single_reads_ch.paired_end
+		// 			.map { sample, fastq  ->
+		// 				return tuple(sample.id, fastq)
+		// 			}
+		// 			.groupTuple(sort: true)
+		// 			.map { sample_id, files ->
+		// 				def meta = [:]
+		// 				meta.id = sample_id
+		// 				meta.is_paired = false
+		// 				meta.library = "paired"
+		// 				meta.merged = true
+		// 				return tuple(meta, files)
+		// 			}
+		// 	)
 
 		// merged_single_ch.view()
 		// merged_single_ch = single_ch
@@ -127,6 +152,7 @@ workflow nevermore_prep_align {
 				return tuple(meta, fastq)
 			}
 			.concat(merge_single_fastqs.out.fastq)
+			.concat(single_reads_ch.single_end)
 			.concat(paired_ch)
 
 		/*	perform post-qc fastqc analysis and generate multiqc report on merged single-read and paired-end sets */
@@ -142,7 +168,9 @@ workflow nevermore_prep_align {
 			"qc"
 		)
 
-		fastq_prep_ch = paired_ch.concat(merge_single_fastqs.out.fastq)
+		fastq_prep_ch = paired_ch
+			.concat(single_reads_ch.single_end)
+			.concat(merge_single_fastqs.out.fastq)
 
 	emit:
 		fastqs = fastq_prep_ch
