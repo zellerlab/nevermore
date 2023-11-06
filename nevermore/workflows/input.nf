@@ -42,6 +42,7 @@ process prepare_fastqs {
 	input:
 		path(files)
 		val(remote_input)
+		val(library_suffix)
 	output:
 		path("fastq/*/*.fastq.{gz,bz2}"), emit: fastqs
 		path("sample_library_info.txt"), emit: library_info
@@ -52,9 +53,11 @@ process prepare_fastqs {
 		def input_dir_prefix = (params.input_dir) ? params.input_dir : params.remote_input_dir
 
 		def custom_suffixes = (params.custom_fastq_file_suffixes) ? "--valid-fastq-suffixes ${params.custom_fastq_file_suffixes}" : ""
+
+		def libsfx_param = (library_suffix != null) ? "--add_sample_suffix ${library_suffix}" : ""
 		
 		"""
-		prepare_fastqs.py -i . -o fastq/ -p ${input_dir_prefix} ${custom_suffixes} ${remote_option} ${remove_suffix}
+		prepare_fastqs.py -i . -o fastq/ -p ${input_dir_prefix} ${custom_suffixes} ${remote_option} ${remove_suffix} ${libsfx_param}
 		"""
 }
 
@@ -92,9 +95,10 @@ workflow remote_bam_input {
 workflow fastq_input {
 	take:
 		fastq_ch
+		libsfx
 	
 	main:
-		prepare_fastqs(fastq_ch.collect(), (params.remote_input_dir != null || params.remote_input_dir))
+		prepare_fastqs(fastq_ch.collect(), (params.remote_input_dir != null || params.remote_input_dir), libsfx)
 
 		library_info_ch = prepare_fastqs.out.library_info
 			.splitCsv(header:false, sep:'\t', strip:true)
