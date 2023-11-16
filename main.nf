@@ -29,7 +29,7 @@ workflow {
 	fastq_input(
 		Channel.fromPath(input_dir + "/*", type: "dir")
 			.filter { !params.ignore_dirs.split(",").contains(it.name) },
-		Channel.empty()
+		Channel.of(null)
 	)
 
 	fastq_ch = fastq_input.out.fastqs
