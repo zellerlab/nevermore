@@ -22,10 +22,8 @@ workflow nevermore_prep_align {
 		single_ch = fastq_ch
 			.filter { it[0].is_paired == false }
 			.map { sample, fastq ->
-				def meta = [:]
+				def meta = sample.clone()
 				meta.id = fastq.name.replaceAll(/_R1.fastq.gz$/, "")
-				meta.is_paired = false
-				meta.library = sample.library
 				meta.merged = false
 				return tuple(meta, fastq)
 			}
@@ -35,10 +33,7 @@ workflow nevermore_prep_align {
 		paired_ch = fastq_ch
 			.filter { it[0].is_paired == true }
 			.map { sample, fastq ->
-				def meta = [:]
-				meta.id = sample.id
-				meta.is_paired = true
-				meta.library = sample.library
+				def meta = sample.clone()
 				meta.merged = true
 				return tuple(meta, fastq)
 			}
@@ -145,16 +140,15 @@ workflow nevermore_prep_align {
 		fastqc_in_ch = single_ch
 			.filter { ! it[0].id.endsWith(".singles") }
 			.map { sample, fastq ->
-				def meta = [:]
+				def meta = sample.clone()
 				meta.id = fastq.name.replaceAll(/_R1.fastq.gz$/, "")
-				meta.is_paired = false
-				meta.library = sample.library
 				meta.merged = false
 				return tuple(meta, fastq)
 			}
-			.concat(merge_single_fastqs.out.fastq)
+			.concat(pe_singles_ch.no_merge)
 			.concat(single_reads_ch.single_end)
 			.concat(paired_ch)
+			.concat(merge_single_fastqs.out.fastq)
 
 		/*	perform post-qc fastqc analysis and generate multiqc report on merged single-read and paired-end sets */
 
@@ -173,16 +167,17 @@ workflow nevermore_prep_align {
 				"qc"
 			)
 
-			read_counts_ch = fastqc.out.counts
+			readcounts_ch = fastqc.out.counts
 		}
 
 		fastq_prep_ch = paired_ch
 			.concat(single_reads_ch.single_end)
+			.concat(pe_singles_ch.no_merge)
 			.concat(merge_single_fastqs.out.fastq)
 
 	emit:
 		fastqs = fastq_prep_ch
-		read_counts = read_counts_ch
+		read_counts = readcounts_ch
 
 }
 
