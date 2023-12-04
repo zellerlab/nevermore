@@ -21,6 +21,8 @@ process stream_gffquant {
 			gq_params += (params.gq_min_identity) ? (" --min_identity " + params.gq_min_identity) : ""
 			gq_params += (params.gq_restrict_metrics) ? " --restrict_metrics ${params.gq_restrict_metrics}" : ""
 			gq_params += (params.gq_keep_alignments) ? " --keep_alignment_file ${sample}.sam" : ""
+			gq_params += (params.gq_unmarked_orphans) ? " --unmarked_orphans" : ""
+
 			gq_params += " -t ${task.cpus}"
 
 			if (params.gq_mode == "domain") {
