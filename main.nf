@@ -45,9 +45,8 @@ workflow {
 				return tuple(sample_id, [fastqs].flatten())
 			}
 			.groupTuple()
-			.map { sample_id, fastqs -> return tuple(sample_id, fastqs.flatten()) }
+			.map { sample_id, fastqs -> return tuple(sample_id, [fastqs].flatten()) }
 			gq_input_ch.view()
-			//.groupTuple(sort: true)
 
 		} else {
 
@@ -55,8 +54,6 @@ workflow {
 
 		}
 
-		// gq_input_ch = ((params.gq_stream) ? nevermore_main.out.fastqs : never_main.out.alignments)
-		// 	.map { sample, files -> return tuple(sample.id, files) }
 		gffquant_flow(gq_input_ch)		
 
 	}
