@@ -16,9 +16,9 @@ process bwa_mem_align {
     def blocksize = "-K 10000000"  // shamelessly taken from NGLess
     
     
-    r1_files = fastqs.findAll( { it.name.endsWith("_R1.fastq.gz") && !it.name.matches("(.*)(singles|orphans|chimeras)(.*)") } )
-    r2_files = fastqs.findAll( { it.name.endsWith("_R2.fastq.gz") } )
-    orphan_files = fastqs.findAll( { it.name.matches("(.*)(singles|orphans|chimeras)(.*)") } )
+    r1_files = reads.findAll( { it.name.endsWith("_R1.fastq.gz") && !it.name.matches("(.*)(singles|orphans|chimeras)(.*)") } )
+    r2_files = reads.findAll( { it.name.endsWith("_R2.fastq.gz") } )
+    orphan_files = reads.findAll( { it.name.matches("(.*)(singles|orphans|chimeras)(.*)") } )
 
     def r1_input = ""
     if (r1_files.size() != 0) {
