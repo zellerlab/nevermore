@@ -90,7 +90,7 @@ process run_gffquant {
 	gq_params += (params.gq_restrict_metrics) ? " --restrict_metrics ${params.gq_restrict_metrics}" : ""
 	gq_params += (params.bam_input_pattern || !params.large_reference) ? (" --format bam") : " --format sam"
 
-	def gq_cmd = "gffquant ${gq_output} ${gq_params} gq_db.sqlite3"
+	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3"
 
 	def mk_aln_sam = ""
 	if (params.bam_input_pattern) {
