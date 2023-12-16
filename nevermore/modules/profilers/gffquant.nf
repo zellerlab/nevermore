@@ -88,7 +88,8 @@ process run_gffquant {
 	gq_params += (params.gq_min_identity) ? (" --min_identity " + params.gq_min_identity) : ""
 	// gq_params += (params.bam_input_pattern) ? " --import_readcounts \$(grep -o '[0-9]\\+' ${readcounts})" : ""
 	gq_params += (params.gq_restrict_metrics) ? " --restrict_metrics ${params.gq_restrict_metrics}" : ""
-	gq_params += (params.bam_input_pattern || !params.large_reference) ? (" --format bam") : " --format sam"
+	// gq_params += (params.bam_input_pattern || !params.large_reference) ? (" --bam") : " --format sam"
+	def formatted_input = (params.bam_input_pattern || !params.large_reference) ? "--bam ${alignments}" : "--sam ${alignments}"
 
 	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3"
 
@@ -96,9 +97,9 @@ process run_gffquant {
 	if (params.bam_input_pattern) {
 
 		if (params.do_name_sort) {
-			gq_cmd = "samtools collate -@ ${task.cpus} -O ${alignments} tmp/collated_bam | ${gq_cmd} -"
+			gq_cmd = "samtools collate -@ ${task.cpus} -O ${alignments} tmp/collated_bam | ${gq_cmd} --bam -"
 		} else {
-			gq_cmd = "${gq_cmd} ${alignments}"
+			gq_cmd = "${gq_cmd} ${formatted_input}"
 		}
 
 	} else if (params.large_reference) {
@@ -110,11 +111,11 @@ process run_gffquant {
 		} else {
 			mk_aln_sam += "ln -s ${alignments[0]} tmp/alignments.sam"
 		}
-		gq_cmd = "cat tmp/alignments.sam | ${gq_cmd} -"
+		gq_cmd = "cat tmp/alignments.sam | ${gq_cmd} --sam -"
 
 	} else {
 
-		gq_cmd = "${gq_cmd} ${alignments}"
+		gq_cmd = "${gq_cmd} ${formatted_input}"
 
 	}
 
