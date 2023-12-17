@@ -91,7 +91,9 @@ process run_gffquant {
 	// gq_params += (params.bam_input_pattern || !params.large_reference) ? (" --bam") : " --format sam"
 	def formatted_input = (params.bam_input_pattern || !params.large_reference) ? "--bam ${alignments}" : "--sam ${alignments}"
 
-	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3"
+	def gq_dbformat = (params.gq_mode == "domain") ? "--db_coordinates ${params.gq_db_coordinates} --db_separator ${params.gq_db_separator}" : ""
+	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3 ${gq_dbformat}"
+
 
 	def mk_aln_sam = ""
 	if (params.bam_input_pattern) {
