@@ -3,9 +3,7 @@ nextflow.enable.dsl=2
 include { classify_sample; classify_sample_with_library_info } from "../modules/functions"
 
 
-if (!params.bam_input_pattern) {
-	params.bam_input_pattern = "**.bam"
-}
+params.bam_input_pattern = "**.bam"	
 
 def bam_suffix_pattern = params.bam_input_pattern.replaceAll(/\*/, "")
 

@@ -64,6 +64,7 @@ workflow nevermore_main {
 	
 			}
 	
+
 		} else {
 	
 			preprocessed_ch = fastq_ch
