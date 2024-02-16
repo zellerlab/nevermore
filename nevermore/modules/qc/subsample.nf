@@ -1,3 +1,4 @@
+params.subsample = [:]
 params.subsample.random_seed = 313
 
 process calculate_library_size_cutoff {
