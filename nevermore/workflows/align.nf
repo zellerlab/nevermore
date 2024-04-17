@@ -6,10 +6,6 @@ include { bwa_mem_align } from "../modules/align/bwa"
 include { merge_and_sort } from "../modules/align/helpers"
 
 def asset_dir = "${projectDir}/nevermore/assets"
-def do_alignment = params.run_gffquant || !params.skip_alignment
-def do_stream = params.gq_stream
-def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
-
 
 workflow nevermore_align {
 

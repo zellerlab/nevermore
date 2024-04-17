@@ -50,10 +50,8 @@ output_dir: "nevermore_output" # string, required
 #########################################################################
 
 ## Preprocessing and Quality Control (qc) handling
-## do_preprocessing true or false controlled by
-## alternative parameter: skip_preprocessing : false # boolean, optional
+## Whether to do preprocessing
 run_preprocessing: true # boolean, optional
-## if neither skip_preprocessing or run_preprocessing are set or if both evaluate to false, preprocessing will run!!!
 
 ## run host-decontamination subworkflow
 # run_sortmerna: false # boolean, optional split Meta-Transcriptomics and Meta-Genomic samples ?
@@ -83,16 +81,12 @@ drop_chimeras: true # boolean, optional
 # amplicon_seq: false # boolean, optional
 ## if true will run different qc_bbduk process than if false
 
-## Whether to do_alignment to reference provided with params.reference
-## alternative parameter: skip_alignment: false # boolean
+## Whether to do alignment to reference provided with params.reference
 run_gffquant: true # boolean, optional
-## if neither are set or both are false, it will do the alignment !!!
 
-## Whether to use gffquant as a wrapper around alignment or perform them sequentially
-## controlled by do_stream which is equal to gq_stream
 ## Note that streaming requires a later gffquant version !
 gq_stream: true # boolean, optional
-## if not set or false but do_alignment is true, alignment and gffquant will run sequentially  !!!
+## if not set or false but run_gffquant is true, alignment and gffquant will run sequentially  !!!
 ## if set, initially alignment will be bypassed and alignment will instead performed concurrently by gffquant.
 
 ## Whether to do nevermore_qa. 

@@ -13,18 +13,13 @@ include { nevermore_qa } from "./qa"
 include { nevermore_decon } from "./decon"
 
 
-def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
-def do_alignment = params.run_gffquant || !params.skip_alignment
-def do_stream = params.gq_stream
-
-
 workflow nevermore_main {
 
 	take:
 		fastq_ch		
 
 	main:
-		if (do_preprocessing) {
+		if (params.run_preprocessing) {
 	
 			nevermore_simple_preprocessing(fastq_ch)
 	
@@ -47,7 +42,7 @@ workflow nevermore_main {
 		collate_ch = Channel.empty()
 		if (params.run_qa) {
 
-			raw_counts_ch = (do_preprocessing) ? nevermore_simple_preprocessing.out.raw_counts : Channel.empty()
+			raw_counts_ch = (params.run_preprocessing) ? nevermore_simple_preprocessing.out.raw_counts : Channel.empty()
 
 			nevermore_qa(
 				nevermore_pack_reads.out.qa_fastqs,

@@ -6,7 +6,7 @@ include { nevermore_main } from "./nevermore/workflows/nevermore"
 include { gffquant_flow } from "./nevermore/workflows/gffquant"
 include { fastq_input } from "./nevermore/workflows/input"
 include { collate_stats } from "./nevermore/modules/collate"
-
+include { nevermore_align } from "./nevermore/workflows/align"
 
 if (params.input_dir && params.remote_input_dir) {
 	log.info """
@@ -21,13 +21,8 @@ if (params.input_dir && params.remote_input_dir) {
 }
 
 def input_dir = (params.input_dir) ? params.input_dir : params.remote_input_dir
-def do_alignment = params.run_gffquant || !params.skip_alignment
-def do_stream = params.gq_stream
-def do_preprocessing = (!params.skip_preprocessing || params.run_preprocessing)
-
 
 params.ignore_dirs = ""
-
 
 workflow {
 
@@ -44,7 +39,7 @@ workflow {
 	align_ch = Channel.empty()
 	counts_ch = nevermore_main.out.readcounts
 
-	if (!do_stream && do_alignment) {
+	if (!params.gq_stream && params.run_gffquant) {
 		nevermore_align(nevermore_main.out.fastqs)
 		align_ch = nevermore_align.out.alignments
 		counts_ch = counts_ch.concat(
@@ -54,7 +49,7 @@ workflow {
 		)
 	}
 
-	if (do_preprocessing && params.run_qa) {
+	if (params.run_preprocessing && params.run_qa) {
 		collate_stats(counts_ch.collect())		
 	}
 
