@@ -1,134 +1,243 @@
-# i/o parameters
+# Required Parameters:
+# input_dir || remote_input_dir
+# output_dir
 
-# Where are the final results published?
-output_dir: "nevermore_output"
+# Conditionally Required Parameters:
+# reference
+# gffquant_db
+# remove_host_kraken2_db
+# motus_database
 
-# How are the final results published?
-# By default, files are copied from the work-dir.
-# Valid settings: "copy", "move", "link", "symlink"
-# ATT: "link" does not work on all filesystems, such as some /scratch volumes
-publish_mode: "copy"
+# gq_mode
+# gq_ambig_mode
+# gq_single_end_library
+# gq_db_coordinates
+# gq_db_separator
+# gq_output
+# gq_dbformat
+# collate_gene_counts
+# gq_collate_columns
+# mp3_db_version
 
-# path to mailx/mail application for email notifications -- EXPERIMENTAL
-mailer: "/usr/bin/mail"
+############ i/o parameters ###################################################
+###############################################################################
 
-# email address for receiving email notifications -- EXPERIMENTAL
-email: false
+## Either input_dir or remote_input_dir are required. They are mutually exclusive!
+input_dir: "/g/scb/zeller/rhackett/metaG_data/original_data/" # string, use if the input metagenomes are local. Will only create symlinks to the original data
 
+# remote_input_dir: # use if the input is remote somewhere. 
+## This will copy the files if they are compressed fastqs with fq.gz, fastq.gz, fastq.bz2, or fq.bz2 suffix, are named according to  the _R1/_R2 naming convention and have only 1 (single-end) or 2 (paired-end) files per sample. In all other cases, files will be renamed, compressed, concatenated etc. on demand, such that for each sample there will be at most 1 file for single-end libraries, 2 files for paired-end libraries, or 3 files for preprocessed paired-end libraries.
 
-# workflow parameters
+# ignore_dirs: "testing_data" # comma separated list of directories of the input which get ignored, optional
 
-# run preprocessing/qc workflow
-# alternative parameter: skip_preprocessing
-run_preprocessing: true
+# suffix_pattern: # string, optional
+## In some cases, the read files of a study will have a suffix after the R1,R2, e.g. “_001”. This prevents proper input processing (with prepare_fastqs). The user can specify that suffix and it will be removed (by prepare_fastqs) 
 
-# run host-decontamination subworkflow
-remove_host: true
+# custom_fastq_file_suffixes: # string, optional
+## This allows you to process fastq files with non-fastq custom suffixes, e.g. <sample>.txt.gz – there are legacy projects that have such reads
 
-# ignore orphan reads after qc
-# vknight: true
-# nevermore: false
-# alternative parameter: keep_orphans
-drop_orphans: false
+# bam_input_pattern: "**.bam"	# string, set in /nevermore/workflows/input.nf #optional
 
-# ignore chimeric reads (unclassified reads with mate classified as host) after decon
-# vknight: true
-# nevermore: false
-drop_chimeras: false
+## Where are the final results published?
+output_dir: "nevermore_output" # string, required
 
-# attempt to merge paired-end reads (currently unused)
-merge_reads: false
+## store output as bam files or as fastq files?
+# do_bam2fq_conversion: false # boolean, optional
+## will not do anything if not set
+## This is a vortex_knight option (vknight is running on a nevermore “core”), which is not required for nevermore runs
 
-# run in amplicon mode
-# GAGA2: true
-amplicon_seq: false
+############################ workflow parameters ########################
+#########################################################################
 
+## Preprocessing and Quality Control (qc) handling
+## do_preprocessing true or false controlled by
+## alternative parameter: skip_preprocessing : false # boolean, optional
+run_preprocessing: true # boolean, optional
+## if neither skip_preprocessing or run_preprocessing are set or if both evaluate to false, preprocessing will run!!!
 
-# qc parameters
-# (also refer to: https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
+## run host-decontamination subworkflow
+# run_sortmerna: false # boolean, optional split Meta-Transcriptomics and Meta-Genomic samples ?
+## will not do anything if not set
 
-# minimum read length [bp]
-# NGLess functional profiling: 45
-# 16S GAGA2: 100
-qc_minlen: 45
+## Remove (human) host reads (via Kraken2 and controlled by Kraken2 params below) from the samples?
+remove_host: true # boolean, optional
+## will not remove host reads if not set.
 
-# bbduk wgs
-# qtrim=rl trimq=3 : gentle quality trimming (only discard bases < phred 3; phred 2 = junk marker) on either side (rl) of the read
-# maq=25 : discard reads below average quality of pred 25
-# ref=?? ktrim=r k=23 mink=11 hdist=1 tpe tbo : right-side k-mer based adapter clipping with 1 mismatch allowed, try overlap-detection (tbo), and trim pairs to same length (tpe) upon adapter detection -- NOTE: ref-parameter is set within workflow
-# ftm=5 : get rid of (n*5)+1st base (last sequencing cycle illumina garbage) -- NOTE: unset for preprocessed data
-# entropy=0.5 entropywindow=50 entropyk=5 : discard low complexity sequences
-qc_params_shotgun: "qtrim=rl trimq=3 maq=25 ktrim=r k=23 mink=11 hdist=1 ftm=5 entropy=0.5 entropywindow=50 entropyk=5 tpe tbo"
+## If oprhan reads should be dropped?
+## Orphan reads are derived from paired-end libraries – when a pair is processed and one mate is filtered out, while the other isn’t, the “surviving” mate is called an “orphan”
+## alternative parameter: keep_orphans: false # boolean
+drop_orphans: false # boolean, optional
+## will not do anything if not set
 
-# bbduk amplicon primers -- EXPERIMENTAL/OBSOLETE
-qc_params_amplicon_primers: "qtrim=rl trimq=3 ktrim=l k=14 mink=1 hdist=1 cu=t"
+## ignore chimeric reads (unclassified reads with mate classified as host) after decon
+## Whether to drop chimeras. Chimeras are paired reads where one was classified as host and the other wasnt. → this needs to be turned on all the time - chimeras should be dropped (as we discussed)
+## What it currently does: subtract 1 from se_group_size in pack.nf
+## 'se_group_size' is an internal flow-control variable, it ensures that the groupTuple operator 3 lines further down will emit all reads from a sample as soon as they enter the channel and not wait until *all* samples have been processed (cf. groupTuple operator in nextflow docs)
+drop_chimeras: true # boolean, optional
 
-# bbduk amplicon seq -- EXPERIMENTAL/OBSOLETE
-qc_params_amplicon: "qtrim=rl trimq=3 ktrim=l k=23 mink=1 hdist=1 tpe tbo cu=t"
+## attempt to merge paired-end reads (currently unused)
+# merge_pairs: false # boolean, optional
+## set in prep.nf # this is currently not used at all. merge_reads has been removed from the workflow
 
-# Stepwise 16S amplicon primer removal -- EXPERIMENTAL
-# If only primer lengths are supplied, figaro/dada2 will take care of primer removal.
-# Otherwise, if primer sequences are supplied via --primer,
-# primer + adapter removal is a two-step process.
-# Primer removal is highly dataset-specific, you might have to play with the settings below:
-# cu=t : allow degenerate primer sequences
-# qtrim=rl trimq=3 : gentle quality trimming (< phred 3) on both sides
-# ktrim=(r|l) : clip adapters from right xor left end -- DO NOT MODIFY.
-# restrictleft|restrictright : only take into account the first / last N bases for adapter clipping -- DO NOT MODIFY
-# k=9 hdist=1: adapter/primer k-mers of length 9 have to match with at most one mismatch
-# mink=1: at the ends of reads, perfect (mismatch=0) adapter/primer k-mer matches of length 1 are allowed (similar to cutadapt)
-# -- to allow mismatches, set hdist2 to a positive, non-zero intege
+## run in amplicon mode
+# amplicon_seq: false # boolean, optional
+## if true will run different qc_bbduk process than if false
 
-# set primer sequences, comma-separated
---primers: ""
+## Whether to do_alignment to reference provided with params.reference
+## alternative parameter: skip_alignment: false # boolean
+run_gffquant: true # boolean, optional
+## if neither are set or both are false, it will do the alignment !!!
 
-# single-end amplicon
---single_end: false
+## Whether to use gffquant as a wrapper around alignment or perform them sequentially
+## controlled by do_stream which is equal to gq_stream
+## Note that streaming requires a later gffquant version !
+gq_stream: true # boolean, optional
+## if not set or false but do_alignment is true, alignment and gffquant will run sequentially  !!!
+## if set, initially alignment will be bypassed and alignment will instead performed concurrently by gffquant.
 
-# long-reads, spanning the whole amplicon on its own
---long_reads: false
+## Whether to do nevermore_qa. 
+## This toggles fastqc and multiqc reporting
+# run_qa: true # boolean, optional
 
-# Step1: bbduk 5' amplicon primer removal
-# gentle quality trimming (< phred 3) + remove left primer on R1-5' and potentially on R2-3' (rc) 
-p5_primer_params: "cu=t qtrim=rl ktrim=l trimq=3 k=9 mink=1 hdist=1 restrictleft=50"
+## samestr is a bork-tool (for strain-profiling), irrelevant for functional profiling
+# run_samestr : false # boolean, optional
+# samestr_marker_db:  optional, has default set to "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/"
+# samestr_marker_db: "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/" # string, set in /nevermore/workflows/samestr.nf 
+# samestr_compatible_output : false # boolean, optional
 
-# Step2: bbduk 3' amplicon primer removal
-# remove right primer on R2-5' and potentially on R1-3' (rc)
-p3_primer_params: "cu=t ktrim=r k=9 mink=1 hdist=1 restrictright=50"
+## whether to run mOTUs at the end
+# run_motus: false # boolean, optional, will not do anything if not set
 
+############################## qc and bbduk parameters #########################################
+#################################################################################################
+## (also refer to: https://jgi.doe.gov/data-and-tools/bbtools/bb-tools-user-guide/bbduk-guide/)
 
-# decontamination parameters
+## Comments on parameters passed to bbduk wgs
+## qtrim=rl trimq=3 : gentle quality trimming (only discard bases < phred 3; phred 2 = junk marker) on either side (rl) of the read
+## maq=25 : discard reads below average quality of pred 25
+## ref=?? ktrim=r k=23 mink=11 hdist=1 tpe tbo : right-side k-mer based adapter clipping with 1 mismatch allowed, try overlap-detection (tbo), and trim pairs to same length (tpe) upon adapter detection -- NOTE: ref-parameter is set within workflow
+## ftm=5 : get rid of (n*5)+1st base (last sequencing cycle illumina garbage) -- NOTE: unset for preprocessed data
+## entropy=0.5 entropywindow=50 entropyk=5 : discard low complexity sequences
 
-# path to a kraken2 database for host-removal
-remove_host_kraken2_db: "/g/scb/zeller/schudoma/kraken2/hg38_silva_genome"
+## only qc_params_shotgun is exposed but is also set internally to the following
+# qc_params_shotgun: "qtrim=rl trimq=3 maq=25 ktrim=r k=23 mink=11 hdist=1 ftm=5 entropy=0.5 entropywindow=50 entropyk=5 tpe tbo"
 
-# kraken2_min_hit_groups
-kraken2_min_hit_groups: 10
+## internally fixed are:
+## qc_params_amplicon_primers: "qtrim=rl trimq=3 ktrim=l k=14 mink=1 hdist=1 cu=t"
+## qc_params_amplicon: "qtrim=rl trimq=3 ktrim=l k=23 mink=1 hdist=1 tpe tbo cu=t"
 
+## Stepwise 16S amplicon primer removal -- EXPERIMENTAL
+## If only primer lengths are supplied, figaro/dada2 will take care of primer removal.
+## Otherwise, if primer sequences are supplied via --primer,
+## primer + adapter removal is a two-step process.
+## Primer removal is highly dataset-specific, you might have to play with the settings below:
+## cu=t : allow degenerate primer sequences
+## qtrim=rl trimq=3 : gentle quality trimming (< phred 3) on both sides
+## ktrim=(r|l) : clip adapters from right xor left end -- DO NOT MODIFY.
+## restrictleft|restrictright : only take into account the first / last N bases for adapter clipping -- DO NOT MODIFY
+## k=9 hdist=1: adapter/primer k-mers of length 9 have to match with at most one mismatch
+## mink=1: at the ends of reads, perfect (mismatch=0) adapter/primer k-mer matches of length 1 are allowed (similar to cutadapt)
+## -- to allow mismatches, set hdist2 to a positive, non-zero integer
 
-# mapping parameters
+## set primer sequences, comma-separated
+# primers # comma separated list of sequences
 
-# path to bwa-mem reference database
-# reference: "/scratch/schudoma/igc.ngm/0.0/data/IGC.fna"
-reference: "/scratch/schudoma/nvm/GMGC10.human-gut.95nr.fna.gz"
+## single-end amplicon
+# --single_end: false ? # controls the amplicon preprocessing - vknight/gaga parameter
 
+## long-reads spanning the whole amplicon on its own
+# long_reads: false # boolean, optional, if not set does nothing
+## controls the amplicon preprocessing - vknight/gaga parameter
 
-# profiling parameters
+# pb_reads: false # boolean, optional, “pacbio_reads” - vknight parameter
 
-# path to functional annotation
-gffquant_db: "/scratch/mocat/freezer/catalogs/GMGC/v1.0.1/GMGC10.emapper2.annotations.tsv.non_redundant_keggpw.gz"
+## Step1: bbduk 5' amplicon primer removal
+## gentle quality trimming (< phred 3) + remove left primer on R1-5' and potentially on R2-3' (rc) 
+## internal default is: "cu=t qtrim=rl ktrim=l trimq=3 k=9 mink=1 hdist=1 restrictleft=50"
+# p5_primer_params: "cu=t qtrim=rl ktrim=l trimq=3 k=9 mink=1 hdist=1 restrictleft=50" # string, optional, has default
 
-# gffquant parameters
-gffquant_params: "-m genes --ambig_mode 1overN"
+## Step2: bbduk 3' amplicon primer removal
+## remove right primer on R2-5' and potentially on R1-3' (rc)
+## internal default is: "cu=t ktrim=r k=9 mink=1 hdist=1 restrictright=50"
+# p3_primer_params: "cu=t ktrim=r k=9 mink=1 hdist=1 restrictright=50" # string, optional, has default
 
+###################### Kraken2 parameters ########################
+## decontamination parameters for host read removal with Kraken2
+## path to a kraken2 database for host-removal, string, conditionally required if remove_host is true
+remove_host_kraken2_db: "/g/scb/zeller/schudoma/kraken2/hg38_silva_genome" # on EMBL cluster
+# remove_host_kraken2_db: "/exports/archive/lucid-grpzeller-archive/nevermore_data/hg38_silva_genome" # on LUMC Shark cluster
 
-motus_database: "/g/scb/zeller/fspringe/Software/mOTUs/motus/share/motus-2.6.0/db_mOTU"
+# kraken2_min_hit_groups: 10 # optional, default set to 10
+fix_read_ids: true # boolean, optional, default true, will not do anything if set to false
 
-# motus parameters
-motus_min_length: 30  # -l
-motus_n_marker_genes: 1  # -g
-motus_tax_level: "genus"  # -k
+####################### Reference DB #############################
 
+## path to bwa-mem reference database. metagenomes will be aligned to this reference
+## conditionally required if do_stream or run_gffquant are true
+reference: "/scratch/schudoma/cazy/indexes/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on EMBL cluster
+# reference: "/exports/archive/lucid-grpzeller-archive/nevermore_data/gmgc/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on LUMC shark cluster
 
+###################### gffquant ########################
+## path to functional annotation reference DB
+## string, conditionally required if do_stream or run_gffquant are true
+gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on EMBL cluster
+# gffquant_db: "/exports/archive/lucid-grpzeller-archive/nevermore_data/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on LUMC shark cluster
 
+## minimum read length [bp] for NGLess functional profiling
+# qc_minlen: 45 # optional, has default set to 45
+
+# gq_aligner: "bwa_mem" # string, optional, default is set to "bwa_mem"
+# gq_strand_specific # boolean, optional, default empty, whether to set the --strand_specific flag
+gq_min_seqlen: 45 # integer, optional, default not set
+gq_min_identity: 0.97 # integer, optional, default not set
+
+# bam_input_pattern # currently some parts are commented out, optional
+## bam_input_pattern causes gffquant to be called with `--bam`, `--large_reference` uses `--sam`
+
+## is this a large reference? e.g. GMGC global -> will cause aligner to write sam instead of bam
+# large_reference # optional will only have an effect if bam_input_pattern not set
+
+# gq_restrict_metrics # optional, default not set
+# gq_keep_alignments # optional, default not set
+gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
+
+gq_mode: "genes" # conditionally required, if set to "domain" it adds the following flags: " --db_separator , --db_coordinates hmmer"
+gq_ambig_mode: "1overN" # conditionally required
+# gq_single_end_library # optional
+# gq_db_coordinates  # conditionally required
+# gq_db_separator  # conditionally required
+# gq_output # conditionally required
+# gq_dbformat # conditionally required
+
+## controls a different gq command, what does it do?
+do_name_sort: true # boolean, optional
+## gffquant requires the input-alignments to be name-sorted, if the bams are not name-sorted, this causes 'samtools collate' to be ran, which sorts the input by name (quicker than samtools sort -n)
+
+# collate_gene_counts # conditionally required, set in /nevermore/workflows/gffquant.nf
+# gq_collate_columns # conditionally required, set in /nevermore/workflows/gffquant.nf
+
+####### metaphlan3 ##### see /nevermore/modules/profilers/metaphlan3.nf
+# mp3_db_version # string, conditionally required
+# mp3_params # string, optional
+
+###################### mOTUs ######################################################
+# motus_database: "/g/scb/zeller/fspringe/Software/mOTUs/motus/share/motus-2.6.0/db_mOTU" # string, conditionally required
+## motus parameters
+# motus_min_length: 75  # -l integer, optional, default set to 75
+# motus_n_marker_genes: 1  # -g integer, optional, default set to 3
+# motus_tax_level: "genus"  # -k integer, optional, default set to "mOTU"
+
+###### other stuff #################################################################
+
+# subsample: [:] # optional, default set to [:], set in /nenvermore/workflows/prep.nf
+## params.subsample.random_seed: 313 # optional, set in /nevermore/modules/subsample.nf
+## subsample.subset # set in /nenvermore/workflows/prep.nf # conditionally required
+
+## Subsample allows to downsample large fastq files
+## At the moment, subsample.subset can be set to “all”, which would downsample all samples or to “metaT”/”metaG” in order to only downsample specific library types
+## The functional profiling workflow has no facilities to assign library type to samples, though (remember: nevermore is the base-library for many other workflows – the subsampling was introduced for hybrid assembly)
+
+## Setting the following will turn off subsampling
+# subsample:
+#    subset: null
 
