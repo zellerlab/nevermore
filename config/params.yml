@@ -201,6 +201,7 @@ gq_min_identity: 0.97 # integer, optional, default not set
 # gq_keep_alignments # optional, default not set
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
+# if dealing with cazymes set it to "domain" - see current issue
 gq_mode: "genes" # conditionally required, if set to "domain" it adds the following flags: " --db_separator , --db_coordinates hmmer"
 gq_ambig_mode: "1overN" # conditionally required
 # gq_single_end_library # optional
@@ -213,8 +214,8 @@ gq_ambig_mode: "1overN" # conditionally required
 do_name_sort: true # boolean, optional
 ## gffquant requires the input-alignments to be name-sorted, if the bams are not name-sorted, this causes 'samtools collate' to be ran, which sorts the input by name (quicker than samtools sort -n)
 
-# collate_gene_counts # conditionally required, set in /nevermore/workflows/gffquant.nf
-# gq_collate_columns # conditionally required, set in /nevermore/workflows/gffquant.nf
+# collate_gene_counts: true #  optional, default is true, removes files ending with “gene_counts.txt.gz” from feature counts if the collate_gene_counts parameter is false
+# gq_collate_columns # optional, default is "uniq_scaled,combined_scaled" set in /nevermore/workflows/gffquant.nf
 
 ####### metaphlan3 ##### see /nevermore/modules/profilers/metaphlan3.nf
 # mp3_db_version # string, conditionally required
