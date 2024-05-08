@@ -23,7 +23,7 @@
 ###############################################################################
 
 ## Either input_dir or remote_input_dir are required. They are mutually exclusive!
-input_dir: "" # string, use if the input metagenomes are local. Will only create symlinks to the original data
+input_dir: "/exports/lucid-grpzeller-work/hackett/metaG_test_data/original_data" # string, use if the input metagenomes are local. Will only create symlinks to the original data
 
 # remote_input_dir: # use if the input is remote somewhere. 
 ## This will copy the files if they are compressed fastqs with fq.gz, fastq.gz, fastq.bz2, or fq.bz2 suffix, are named according to  the _R1/_R2 naming convention and have only 1 (single-end) or 2 (paired-end) files per sample. In all other cases, files will be renamed, compressed, concatenated etc. on demand, such that for each sample there will be at most 1 file for single-end libraries, 2 files for paired-end libraries, or 3 files for preprocessed paired-end libraries.
@@ -156,8 +156,8 @@ gq_stream: true # boolean, optional
 ###################### Kraken2 parameters ########################
 ## decontamination parameters for host read removal with Kraken2
 ## path to a kraken2 database for host-removal, string, conditionally required if remove_host is true
-remove_host_kraken2_db: "/g/scb/zeller/schudoma/kraken2/hg38_silva_genome" # on EMBL cluster
-# remove_host_kraken2_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/hg38" # on LUMC Shark cluster
+# remove_host_kraken2_db: "/g/scb/zeller/schudoma/kraken2/hg38_silva_genome" # on EMBL cluster
+remove_host_kraken2_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/hg38" # on LUMC Shark cluster
 
 # kraken2_min_hit_groups: 10 # optional, default set to 10
 fix_read_ids: true # boolean, optional, default true, will not do anything if set to false
@@ -166,14 +166,14 @@ fix_read_ids: true # boolean, optional, default true, will not do anything if se
 
 ## path to bwa-mem reference database. metagenomes will be aligned to this reference
 ## conditionally required if do_stream or run_gffquant are true
-reference: "/scratch/schudoma/cazy/indexes/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on EMBL cluster
-# reference: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_gene_catalogues/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on the LUMC shark cluster
+# reference: "/scratch/schudoma/cazy/indexes/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on EMBL cluster
+reference: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_gene_catalogues/GMGC10.human-gut.95nr.0.5.percent.prevalence.fna.gz" # on the LUMC shark cluster
 
 ###################### gffquant ########################
 ## path to functional annotation reference DB
 ## string, conditionally required if do_stream or run_gffquant are true
-gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on EMBL cluster
-# gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_emapper_annotations/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on LUMC shark cluster
+# gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on EMBL cluster
+gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_emapper_annotations/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on LUMC shark cluster
 
 ## minimum read length [bp] for NGLess functional profiling
 # qc_minlen: 45 # optional, has default set to 45
