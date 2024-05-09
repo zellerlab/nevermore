@@ -62,6 +62,7 @@ process stream_gffquant {
 			echo 'Copying database...'
 			cp -v ${gq_db} GQ_DATABASE
 			${gq_cmd} &> logs/${sample}.log
+			cat ${sample} | | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o ${sample}.bam
 			rm -rfv GQ_DATABASE* tmp/
 			"""
 
