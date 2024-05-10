@@ -61,8 +61,9 @@ process stream_gffquant {
 			mkdir -p logs/ tmp/ profiles/
 			echo 'Copying database...'
 			cp -v ${gq_db} GQ_DATABASE
+            gffquant --version
 			${gq_cmd} &> logs/${sample}.log
-			cat ${sample} | | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o ${sample}.bam
+			cat ${sample} | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o ${sample}.bam
 			rm -rfv GQ_DATABASE* tmp/
 			"""
 
