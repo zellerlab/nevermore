@@ -23,7 +23,7 @@
 ###############################################################################
 
 ## Either input_dir or remote_input_dir are required. They are mutually exclusive!
-input_dir: "/exports/lucid-grpzeller-work/hackett/metaG_test_data/original_data" # string, use if the input metagenomes are local. Will only create symlinks to the original data
+input_dir: "/exports/lucid-grpzeller-work/<YOUR_DATA>" # string, use if the input metagenomes are local. Will only create symlinks to the original data
 
 # remote_input_dir: # use if the input is remote somewhere. 
 ## This will copy the files if they are compressed fastqs with fq.gz, fastq.gz, fastq.bz2, or fq.bz2 suffix, are named according to  the _R1/_R2 naming convention and have only 1 (single-end) or 2 (paired-end) files per sample. In all other cases, files will be renamed, compressed, concatenated etc. on demand, such that for each sample there will be at most 1 file for single-end libraries, 2 files for paired-end libraries, or 3 files for preprocessed paired-end libraries.
@@ -93,8 +93,8 @@ gq_stream: true # boolean, optional
 
 ## samestr is a bork-tool (for strain-profiling), irrelevant for functional profiling
 # run_samestr : false # boolean, optional
-# samestr_marker_db:  optional, has default set to "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/"
-# samestr_marker_db: "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/" # string, set in /nevermore/workflows/samestr.nf 
+# samestr_marker_db:  optional, has default set to "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/" # on EMBL cluster
+# samestr_marker_db: "/scratch/schudoma/databases/samestr/mpa_vOct22_CHOCOPhlAnSGB_202212/marker_db/" # string, set in /nevermore/workflows/samestr.nf # on EMBL cluster
 # samestr_compatible_output : false # boolean, optional
 
 ## whether to run mOTUs at the end
@@ -214,7 +214,7 @@ do_name_sort: true # boolean, optional
 # mp3_params # string, optional
 
 ###################### mOTUs ######################################################
-# motus_database: "/g/scb/zeller/fspringe/Software/mOTUs/motus/share/motus-2.6.0/db_mOTU" # string, conditionally required
+# motus_database: "/g/scb/zeller/fspringe/Software/mOTUs/motus/share/motus-2.6.0/db_mOTU" # string, conditionally required # on EMBL cluster
 ## motus parameters
 # motus_min_length: 75  # -l integer, optional, default set to 75
 # motus_n_marker_genes: 1  # -g integer, optional, default set to 3
