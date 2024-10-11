@@ -1,7 +1,6 @@
 params.gq_aligner = "bwa"
 
 process stream_gffquant {
-    publishDir params.output_dir, mode: "copy"
 	label "gffquant"
 	tag "gffquant.${sample}"
 
@@ -12,7 +11,7 @@ process stream_gffquant {
 	output:
 		tuple val(sample), path("profiles/${sample}/*.txt.gz"), emit: results
 		tuple val(sample), path("logs/${sample}.log")
-        tuple val(sample), path("alignments/${sample}/${sample}*.sam"), emit: alignments, optional: true
+        tuple val(sample), path("alignments/${sample}/*.bam"), emit: alignments, optional: true
 
 	script:
 			def gq_output = "-o profiles/${sample}/${sample}"
@@ -22,7 +21,7 @@ process stream_gffquant {
 			gq_params += (params.gq_min_seqlen) ? (" --min_seqlen " + params.gq_min_seqlen) : ""
 			gq_params += (params.gq_min_identity) ? (" --min_identity " + params.gq_min_identity) : ""
 			gq_params += (params.gq_restrict_metrics) ? " --restrict_metrics ${params.gq_restrict_metrics}" : ""
-			gq_params += (params.gq_keep_alignments) ? " --keep_alignment_file /alignments/${sample}/${sample}.sam" : ""
+			gq_params += (params.gq_keep_alignments) ? " --keep_alignment_file ${sample}.sam" : ""
 			gq_params += (params.gq_unmarked_orphans) ? " --unmarked_orphans" : ""
 
 			gq_params += " -t ${task.cpus}"
@@ -65,16 +64,15 @@ process stream_gffquant {
 			echo 'Copying database...'
 			cp -v ${gq_db} GQ_DATABASE
 			${gq_cmd} &> logs/${sample}.log
-            samtools merge -n -o alignments/${sample}_merged.sam alignments/${sample}.*.sam
-			cat alignments/${sample}/${sample}_merged.sam | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o alignments/${sample}/${sample}.bam
+            samtools merge -n -o ${sample}_merged.sam ${sample}.*.sam
+			cat ${sample}_merged.sam | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o ${sample}.bam
 			rm -rfv GQ_DATABASE* tmp/
-            rm alignments/${sample}/*.sam
+            rm *.sam
 			"""
 
 }
 
 process run_gffquant {
-    publishDir params.output_dir, mode: "copy"
 	label "gffquant"
 
 	input:
@@ -142,7 +140,6 @@ process run_gffquant {
 params.gq_collate_columns = "uniq_scaled,combined_scaled"
 
 process collate_feature_counts {
-    publishDir params.output_dir, mode: "copy"
     label "collate_profiles"
     label "gffquant"
 

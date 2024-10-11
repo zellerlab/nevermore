@@ -8,7 +8,7 @@ process bwa_mem_align {
     val(do_name_sort)
 
     output:
-    tuple val(sample), path("${sample.id}.bam"), emit: bam
+    tuple val(sample), path("alignments/${sample}/${sample.id}.bam"), emit: bam
 
     script:
     def maxmem = task.memory.toGiga()
