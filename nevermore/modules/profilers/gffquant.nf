@@ -68,6 +68,7 @@ process stream_gffquant {
             samtools merge -n -o alignments/${sample}_merged.sam alignments/${sample}.*.sam
 			cat alignments/${sample}/${sample}_merged.sam | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o alignments/${sample}/${sample}.bam
 			rm -rfv GQ_DATABASE* tmp/
+            rm alignments/${sample}/*.sam
 			"""
 
 }
