@@ -57,6 +57,7 @@ process stream_gffquant {
 	
 			def gq_cmd = "gffquant ${gq_output} ${gq_params} --db GQ_DATABASE --reference \$(readlink ${reference}) --aligner ${params.gq_aligner} ${input_files}"
             def mkdir_alignments = (params.keep_alignments != null && params.keep_alignments != false) ? "mkdir -p alignments/${sample}/" : ""
+			def save_alignments = (params.keep_alignments != null && params.keep_alignments != false) ? "cat ${sample}_merged.sam | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o alignments/${sample}/${sample}.bam" : ""
 			"""
 			set -e -o pipefail
 			mkdir -p logs/ tmp/ profiles/
@@ -65,9 +66,8 @@ process stream_gffquant {
 			cp -v ${gq_db} GQ_DATABASE
 			${gq_cmd} &> logs/${sample}.log
             samtools merge -n -o ${sample}_merged.sam ${sample}.*.sam
-			cat ${sample}_merged.sam | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh -o alignments/${sample}/${sample}.bam
+			${save_alignments}
 			rm -rfv GQ_DATABASE* tmp/
-            rm *.sam
 			"""
 
 }
