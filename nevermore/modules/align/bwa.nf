@@ -48,7 +48,7 @@ process bwa_mem_align {
     """
     set -e -o pipefail
     mkdir -p tmp/
-    mkdir -p alignments/
+    mkdir -p alignments/${sample.id}/
     ${pre_sort_cmd_1}
     ${pre_sort_cmd_2}
     bwa mem -R ${read_group} -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${r1_input} ${r2_input} | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh | ${sort_cmd}
