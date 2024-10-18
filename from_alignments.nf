@@ -3,7 +3,7 @@
 nextflow.enable.dsl=2
 
 include { bam_input } from "./nevermore/workflows/input"
-include { run_gffquant: collate_feature_counts } from "./nevermore/workflows/gffquant"
+include { run_gffquant; collate_feature_counts } from "./nevermore/workflows/gffquant"
 
 if (params.input_dir && params.remote_input_dir) {
 	log.info """
