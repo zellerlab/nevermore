@@ -39,7 +39,7 @@ workflow {
 		.groupTuple(sort: true)
 
 	run_gffquant(
-		align_ch,
+		alignment_ch,
 		params.gffquant_db
 	)
 
