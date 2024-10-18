@@ -5,6 +5,8 @@ nextflow.enable.dsl=2
 include { bam_input } from "./nevermore/workflows/input"
 include { run_gffquant; collate_feature_counts } from "./nevermore/workflows/gffquant"
 
+params.gq_collate_columns = "uniq_scaled,combined_scaled"
+
 if (params.input_dir && params.remote_input_dir) {
 	log.info """
 		Cannot process both --input_dir and --remote_input_dir. Please check input parameters.
@@ -42,7 +44,7 @@ workflow {
 		alignment_ch,
 		params.gffquant_db
 	)
-
+	
 	feature_count_ch = run_gffquant.out.results
 		.map { sample, files -> return files }
 		.flatten()
