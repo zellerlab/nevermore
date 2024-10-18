@@ -45,7 +45,7 @@ process prepare_fastqs {
 		path("fastq/*/*.fastq.{gz,bz2}"), emit: fastqs
 		path("sample_library_info.txt"), emit: library_info
 
-  script:
+	script:
 		def remote_option = (remote_input) ? "--remote-input" : ""
 		def remove_suffix = (params.suffix_pattern) ? "--remove-suffix ${params.suffix_pattern}" : ""
 		def input_dir_prefix = (params.input_dir) ? params.input_dir : params.remote_input_dir

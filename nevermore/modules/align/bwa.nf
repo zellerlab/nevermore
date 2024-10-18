@@ -8,7 +8,7 @@ process bwa_mem_align {
     val(do_name_sort)
 
     output:
-    tuple val(sample), path("alignments/${sample.id}/${sample.id}.bam"), emit: bam
+    tuple val(sample), path("${sample.id}.bam"), emit: bam
 
     script:
     def maxmem = task.memory.toGiga()
@@ -37,7 +37,7 @@ process bwa_mem_align {
         reads2 = "${sample.id}_R2.sorted.fastq.gz"
     }
 
-    def sort_cmd = (do_name_sort) ? "samtools collate -@ ${sort_cpus} -o alignments/${sample.id}/${sample.id}.bam - tmp/collated_bam" : "samtools sort -@ ${sort_cpus} -o alignments/${sample.id}/${sample.id}.bam -"
+    def sort_cmd = (do_name_sort) ? "samtools collate -@ ${sort_cpus} -o ${sample.id}.bam - tmp/collated_bam" : "samtools sort -@ ${sort_cpus} -o ${sample.id}.bam -"
 
     def read_group_id = (sample.library == "paired") ? ((sample.is_paired) ? 2 : 2) : 1
     def read_group = "'@RG\\tID:${read_group_id}\\tSM:${sample.id}'"
@@ -48,7 +48,6 @@ process bwa_mem_align {
     """
     set -e -o pipefail
     mkdir -p tmp/
-    mkdir -p alignments/${sample.id}/
     ${pre_sort_cmd_1}
     ${pre_sort_cmd_2}
     bwa mem -R ${read_group} -a -t ${align_cpus} ${blocksize} \$(readlink ${reference}) ${r1_input} ${r2_input} | awk -F'\t' '!/^@/ {for (i=1; i<=NF; i++) if (i==10 || i==11) \$i="*"} 1' OFS='\t' | samtools view -F 4 -buSh | ${sort_cmd}
