@@ -3,9 +3,7 @@
 nextflow.enable.dsl=2
 
 include { bam_input } from "./nevermore/workflows/input"
-include { run_gffquant; collate_feature_counts } from "./nevermore/workflows/gffquant"
-
-params.gq_collate_columns = "uniq_scaled,combined_scaled"
+include { gffquant_flow } from "./nevermore/workflows/gffquant"
 
 if (params.input_dir && params.remote_input_dir) {
 	log.info """
@@ -40,31 +38,8 @@ workflow {
 		}
 		.groupTuple(sort: true)
 
-	run_gffquant(
+	gffquant_flow(
 		alignment_ch,
-		params.gffquant_db
 	)
-	
-	feature_count_ch = run_gffquant.out.results
-		.map { sample, files -> return files }
-		.flatten()
-		.filter { !it.name.endsWith("Counter.txt.gz") }
-		.filter { params.collate_gene_counts || !it.name.endsWith("gene_counts.txt.gz") }
-		.map { file ->
-			def category = file.name
-				.replaceAll(/\.txt\.gz$/, "")
-				.replaceAll(/.+\./, "")
-			return tuple(category, file)
-		}
-		.groupTuple(sort: true)
-		.combine(
-			Channel.from(params.gq_collate_columns.split(","))
-		)
-
-	feature_count_ch.view()
-
-	if (!params.no_collate) {
-		collate_feature_counts(feature_count_ch)
-	}
 
 }
