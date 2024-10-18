@@ -178,7 +178,7 @@ gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogu
 ## minimum read length [bp] for NGLess functional profiling
 # qc_minlen: 45 # optional, has default set to 45
 
-# gq_aligner: "bwa_mem" # string, optional, default is set to "bwa_mem"
+# gq_aligner: "bwa" # string, optional, default is set to "bwa"
 # gq_strand_specific # boolean, optional, default empty, whether to set the --strand_specific flag
 gq_min_seqlen: 45 # integer, optional, default not set
 gq_min_identity: 0.97 # integer, optional, default not set
