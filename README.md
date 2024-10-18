@@ -12,7 +12,7 @@ In the mean time, create Github issues to complain!
 ### What does this pipeline do ? - The (very) high level overview
 It processes Shotgun Metagenomic files. This is a basic general workflow.  
 Data Preprocessing:  
-- fastq file handling
+- input file handling
 - Quality Control
 - Human Decontamination
 - Stats collection
@@ -24,7 +24,7 @@ Read Alignment to the GMGC:
 GFFQuant:  
 - Functional Annotations from the GMGC are transferred to aligned Shotgun Reads
 
-Running MoTus Taxonomic Profiling  
+Running MoTus3, humann3 or MetaPhlan4 Taxonomic Profiling  
 
 ### How do I get this pipeline?
 Currenlty I recommend cloning your own local version of this repo.
@@ -50,10 +50,17 @@ Edit either the `run_lumc.sh` or `run_embl.sh` file to suit your needs.
 
 Edit the `params.yml` and `config.yml` files to suit your needs  
   
-IMPORTANT: save a copy of params.yml and config.yml together with your run!  
+IMPORTANT: After your run has successfully completed:  
+  
+your files will the in the output_dir specified in your params file.  
+Copy it to your archived parition, resolving symlinks using:  
+`cp -Lr outdir archived_distination_dir`  
+
+save a copy of params.yml and config.yml together with your run!  
+`cp {params.yml,run.config} archived destination_dir` 
 
 Submit the job with:  
-`sbatch run_lumc.sh'  
+`sbatch run_lumc.sh`  
 
 ### Requirements
 This pipeline is meant to be run on the cluster environments at either EMBL or LUMC.
