@@ -7,7 +7,7 @@ process merge_and_sort {
     val(do_name_sort)
 
     output:
-    tuple val(sample), path("bam/${sample}.bam"), emit: bam
+    tuple val(sample), path("alignments/${sample}.bam"), emit: bam
     tuple val(sample), path("stats/bam/${sample}.flagstats.txt"), emit: flagstats
 
     script:
@@ -16,15 +16,15 @@ process merge_and_sort {
 
     // need a better detection for this
     if (bamfiles instanceof Collection && bamfiles.size() >= 2) {
-        merge_cmd = "samtools merge -@ $task.cpus ${sort_order} bam/${sample}.bam ${bamfiles}"
+        merge_cmd = "samtools merge -@ $task.cpus ${sort_order} -c alignments/${sample}.bam ${bamfiles}"
     } else {
-        merge_cmd = "ln -s ../${bamfiles[0]} bam/${sample}.bam"
+        merge_cmd = "ln -s ../${bamfiles[0]} alignments/${sample}.bam"
     }
 
     """
-    mkdir -p bam/ stats/bam/
+    mkdir -p alignments/ stats/bam/
     ${merge_cmd}
-    samtools flagstats bam/${sample}.bam > stats/bam/${sample}.flagstats.txt
+    samtools flagstats alignments/${sample}.bam > stats/bam/${sample}.flagstats.txt
     """
 }
 
