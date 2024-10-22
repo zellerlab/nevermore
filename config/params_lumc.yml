@@ -194,8 +194,8 @@ gq_keep_alignments: true # optional, default not set, prints alignments as sam f
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
 # if dealing with cazymes set it to "domain" - see current issue
-gq_mode: "genes" # conditionally required, if set to "domain" the following flags are set: " --db_separator , --db_coordinates hmmer"
-gq_ambig_mode: "1overN" # conditionally required
+# gq_mode: "genes" # optional, default set to "genes", if set to "domain" the following flags MUST be set: " --db_separator , --db_coordinates hmmer"
+# gq_ambig_mode: "1overN" # optional, default "1overN" other options are "unique_only", "all1", "primary_only"
 # gq_single_end_library # optional, default assumes paired end
 # the two flags below are currently ignored and set to " --db_separator , --db_coordinates hmmer" when using mode: "domains"
 # gq_db_coordinates  # conditionally required. set to 'bed' or 'hmmer', for cayman set to 'hmmer'

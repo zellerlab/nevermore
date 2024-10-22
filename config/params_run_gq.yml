@@ -55,8 +55,8 @@ gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
 # if dealing with cazymes set it to "domain" - see current issue
-gq_mode: "genes" # conditionally required, if set to "domain" the following flags MUST be set: " --db_separator , --db_coordinates hmmer"
-gq_ambig_mode: "1overN" # conditionally required
+# gq_mode: "genes" # optional, default set to "genes", if set to "domain" the following flags MUST be set: " --db_separator , --db_coordinates hmmer"
+# gq_ambig_mode: "1overN" # optional, default "1overN" other options are "unique_only", "all1", "primary_only"
 # gq_single_end_library # optional, default assumes paired end
 # gq_db_coordinates  # conditionally required. set to 'bed' or 'hmmer', for cayman set to 'hmmer'
 # gq_db_separator  # conditionally required, set to '\t' or ',' for cayman set to ','

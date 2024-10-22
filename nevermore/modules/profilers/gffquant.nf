@@ -1,6 +1,8 @@
 params.gq_aligner = "bwa"
+params.gq_mode = "genes"
 params.gq_min_identity = 0.97
 params.gq_min_seqlen = 45
+params.gq_ambig_mode = "1overN"
 
 process stream_gffquant {
 	label "gffquant"
