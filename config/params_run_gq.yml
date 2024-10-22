@@ -44,9 +44,9 @@ output_dir: "nevermore_output" # string, required
 gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on EMBL cluster
 # gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_emapper_annotations/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on LUMC shark cluster
 
-# gq_strand_specific # boolean, optional, default empty, whether to set the --strand_specific flag
-gq_min_seqlen: 45 # integer, optional, default not set
-gq_min_identity: 0.97 # integer, optional, default not set
+# gq_strand_specific # boolean, optional, default empty, perform strand-specific counting for RNAseq reads, ignored for paired-end
+# gq_min_seqlen: 45 # integer, optional sam/bam file filters in gffquant, default 45
+# gq_min_identity: 0.97 # float, optional sam/bam file filters in gffquant, default 0.97
 
 ## is this a large reference? e.g. GMGC global -> will cause aligner to write sam instead of bam
 # large_reference # optional will only have an effect if bam_input_pattern not set
@@ -55,11 +55,11 @@ gq_min_identity: 0.97 # integer, optional, default not set
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
 # if dealing with cazymes set it to "domain" - see current issue
-gq_mode: "genes" # conditionally required, if set to "domain" it adds the following flags: " --db_separator , --db_coordinates hmmer"
+gq_mode: "genes" # conditionally required, if set to "domain" the following flags MUST be set: " --db_separator , --db_coordinates hmmer"
 gq_ambig_mode: "1overN" # conditionally required
-# gq_db_coordinates  # conditionally required
-# gq_db_separator  # conditionally required
-# gq_output # conditionally required
+# gq_single_end_library # optional, default assumes paired end
+# gq_db_coordinates  # conditionally required. set to 'bed' or 'hmmer', for cayman set to 'hmmer'
+# gq_db_separator  # conditionally required, set to '\t' or ',' for cayman set to ','
 
 do_name_sort: true # boolean, optional
 ## gffquant requires the input-alignments to be name-sorted, if the bams are not name-sorted, this causes 'samtools collate' to be ran, which sorts the input by name (quicker than samtools sort -n)

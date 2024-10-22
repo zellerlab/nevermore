@@ -179,9 +179,9 @@ gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogu
 # qc_minlen: 45 # optional, has default set to 45
 
 # gq_aligner: "bwa" # string, optional, default is set to "bwa"
-# gq_strand_specific # boolean, optional, default empty, whether to set the --strand_specific flag
-gq_min_seqlen: 45 # integer, optional, default not set
-gq_min_identity: 0.97 # integer, optional, default not set
+# gq_strand_specific # boolean, optional, default empty, perform strand-specific counting for RNAseq reads, ignored for paired-end
+# gq_min_seqlen: 45 # integer, optional sam/bam file filters in gffquant, default 45
+# gq_min_identity: 0.97 # float, optional sam/bam file filters in gffquant, default 0.97
 
 # bam_input_pattern # currently some parts are commented out, optional
 ## bam_input_pattern causes gffquant to be called with `--bam`, `--large_reference` uses `--sam`
@@ -194,13 +194,12 @@ gq_keep_alignments: true # optional, default not set, prints alignments as sam f
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
 # if dealing with cazymes set it to "domain" - see current issue
-gq_mode: "genes" # conditionally required, if set to "domain" it adds the following flags: " --db_separator , --db_coordinates hmmer"
+gq_mode: "genes" # conditionally required, if set to "domain" the following flags are set: " --db_separator , --db_coordinates hmmer"
 gq_ambig_mode: "1overN" # conditionally required
-# gq_single_end_library # optional
-# gq_db_coordinates  # conditionally required
-# gq_db_separator  # conditionally required
-# gq_output # conditionally required
-# gq_dbformat # conditionally required
+# gq_single_end_library # optional, default assumes paired end
+# the two flags below are currently ignored and set to " --db_separator , --db_coordinates hmmer" when using mode: "domains"
+# gq_db_coordinates  # conditionally required. set to 'bed' or 'hmmer', for cayman set to 'hmmer'
+# gq_db_separator  # conditionally required, set to '\t' or ',' for cayman set to ','
 
 ## controls a different gq command, what does it do?
 do_name_sort: true # boolean, optional

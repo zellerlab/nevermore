@@ -1,4 +1,6 @@
 params.gq_aligner = "bwa"
+params.gq_min_identity = 0.97
+params.gq_min_seqlen = 45
 
 process stream_gffquant {
 	label "gffquant"
