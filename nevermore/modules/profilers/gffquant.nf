@@ -30,9 +30,9 @@ process stream_gffquant {
 
 			gq_params += " -t ${task.cpus}"
 
-			if (params.gq_mode == "domain") {
-				gq_params += " --db_separator , --db_coordinates hmmer"
-			}
+			// if mode is domain, must set params.gq_db_format.
+			// For cayman params.gq_db_format should be set to "hmmer"
+			gq_params += (params.gq_mode == "domain") ? ("--db_format " + params.gq_db_format) : ""
 
 			def input_files = ""
 			// we cannot auto-detect SE vs. PE-orphan!
@@ -100,8 +100,8 @@ process run_gffquant {
 	// gq_params += (params.bam_input_pattern || !params.large_reference) ? (" --bam") : " --format sam"
 	def formatted_input = (params.bam_input_pattern || !params.large_reference) ? "--bam ${alignments}" : "--sam ${alignments}"
 
-	def gq_dbformat = (params.gq_mode == "domain") ? "--db_coordinates ${params.gq_db_coordinates} --db_separator ${params.gq_db_separator}" : ""
-	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3 ${gq_dbformat}"
+	gq_params += (params.gq_mode == "domain") ? "--db_format ${params.gq_db_format}" : ""
+	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3"
 
 
 	def mk_aln_sam = ""
