@@ -44,6 +44,10 @@ output_dir: "nevermore_output" # string, required
 gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on EMBL cluster
 # gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/GMGC_reduced_0_5_prevalence/GMGC_emapper_annotations/GMGC10.human-gut.95nr.0.5pv.20230422.2101.sqlite3" # on LUMC shark cluster
 
+# ! if running with gq_mode: "domain" then gffquant_db is likely:
+# gffquant_db: "/scratch/schudoma/databases/cazy/cazy_db.20230916.csv" # on EMBL cluster
+# gffquant_db: /exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/cazy_databases/cazy_db.20230916.csv" on LUMC cluster
+
 # gq_strand_specific # boolean, optional, default empty, perform strand-specific counting for RNAseq reads, ignored for paired-end
 # gq_min_seqlen: 45 # integer, optional sam/bam file filters in gffquant, default 45
 # gq_min_identity: 0.97 # float, optional sam/bam file filters in gffquant, default 0.97

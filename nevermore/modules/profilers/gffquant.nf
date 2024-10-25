@@ -101,7 +101,7 @@ process run_gffquant {
 	def formatted_input = (params.bam_input_pattern || !params.large_reference) ? "--bam ${alignments}" : "--sam ${alignments}"
 
 	gq_params += (params.gq_mode == "domain") ? " --db_format ${params.gq_db_format}" : ""
-	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db gq_db.sqlite3"
+	def gq_cmd = "gffquant ${gq_output} ${gq_params} --db GQ_DATABASE"
 
 
 	def mk_aln_sam = ""
@@ -134,10 +134,10 @@ process run_gffquant {
 	set -e -o pipefail
 	mkdir -p logs/ tmp/ profiles/
 	echo 'Copying database...'
-	cp -v ${gq_db} gq_db.sqlite3
+	cp -v ${gq_db} GQ_DATABASE
 	${mk_aln_sam}
 	${gq_cmd} &> logs/${sample}.log
-	rm -rfv gq_db.sqlite3* tmp/
+	rm -rfv GQ_DATABASE* tmp/
 	"""
 }
 
