@@ -25,8 +25,8 @@ workflow {
 		bam_input(
 			Channel.fromPath(input_dir + "/**.bam", type: "file")
 		)
-	} else if (bam_input_pattern) {
-		bam_input_pattern = input_dir + "/" + params.bam_input_pattern
+	} else {
+		def bam_input_pattern = input_dir + "/" + params.bam_input_pattern
 		bam_input(
 			Channel.fromPath(bam_input_pattern)
 		)
