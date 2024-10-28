@@ -46,7 +46,7 @@ gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230
 
 # ! if running with gq_mode: "domain" then gffquant_db is likely:
 # gffquant_db: "/scratch/schudoma/databases/cazy/cazy_db.20230916.csv" # on EMBL cluster
-# gffquant_db: /exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/cazy_databases/cazy_db.20230916.csv" on LUMC cluster
+# gffquant_db: "/exports/archive/lucid-grpzeller-primary/SHARED/DATA/gene_catalogues/cazy_databases/cazy_db.20230916.csv" on LUMC cluster
 
 # gq_strand_specific # boolean, optional, default empty, perform strand-specific counting for RNAseq reads, ignored for paired-end
 # gq_min_seqlen: 45 # integer, optional sam/bam file filters in gffquant, default 45
