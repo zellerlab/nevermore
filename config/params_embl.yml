@@ -194,7 +194,6 @@ gffquant_db: "/scratch/schudoma/databases/gmgc/GMGC10.human-gut.95nr.0.5pv.20230
 # large_reference # optional will only have an effect if bam_input_pattern not set
 
 # gq_restrict_metrics # optional, default not set
-gq_keep_alignments: true # optional, default not set, prints alignments as sam file with do_stream
 gq_unmarked_orphans: true # boolean, optional, default empty, whether to set the --unmarked_orphans flag
 
 # if dealing with cazymes set it to "domain" - see current issue
