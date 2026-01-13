@@ -1,5 +1,5 @@
 process bwa_mem_align {
-    container "docker://registry.git.embl.de/schudoma/align-docker:latest"
+    container "docker://registry.git.embl.org/schudoma/align-docker:latest"
     label 'align'
 
     input:
